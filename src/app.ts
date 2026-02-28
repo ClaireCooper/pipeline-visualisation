@@ -1,10 +1,10 @@
 import { EditorView, basicSetup } from "codemirror";
 import { yaml } from "@codemirror/lang-yaml";
+import { oneDark } from "@codemirror/theme-one-dark";
 import cytoscape from "cytoscape";
 import dagre from "cytoscape-dagre";
 
 cytoscape.use(dagre);
-
 import { parse } from "./parser";
 import { buildElements } from "./elements";
 import { createNavStack, push, pop, current } from "./navigation";
@@ -20,6 +20,7 @@ const breadcrumbText = document.getElementById(
 ) as HTMLSpanElement;
 const editorPane = document.getElementById("editor-pane") as HTMLDivElement;
 const toggleBtn = document.getElementById("toggle-btn") as HTMLButtonElement;
+const cyTooltip = document.getElementById("cy-tooltip") as HTMLDivElement;
 
 // State
 let navStack: NavStack | null = null;
@@ -35,30 +36,34 @@ const cy = cytoscape({
         label: "data(label)",
         "text-valign": "center",
         "text-halign": "center",
-        "background-color": "#4a90d9",
-        color: "#fff",
-        "font-size": "13px",
+        "background-color": "#1e1e1e",
+        "border-width": 1,
+        "border-color": "#c586c0",
+        color: "#c586c0",
+        "font-size": "10px",
+        "font-family": "monospace",
+        "text-wrap": "ellipsis",
+        "text-max-width": 100,
         width: 120,
-        height: 40,
+        height: 36,
         shape: "round-rectangle",
       },
     },
     {
       selector: "node[uses]",
       style: {
-        "border-width": 3,
-        "border-color": "#1a5fa8",
+        "border-width": 2,
         "border-style": "double",
       },
     },
     {
       selector: "edge",
       style: {
-        width: 2,
-        "line-color": "#aaa",
-        "target-arrow-color": "#aaa",
-        "target-arrow-shape": "triangle",
-        "curve-style": "bezier",
+        width: 1.5,
+        "line-color": "#ce9178",
+        "target-arrow-shape": "none",
+        "curve-style": "taxi",
+        "taxi-direction": "rightward",
       },
     },
   ],
@@ -95,6 +100,20 @@ function onParsed(newPipeline: ParsedPipeline): void {
   errorMsg.textContent = "";
 }
 
+// Node tooltip
+cy.on("mouseover", "node", (evt) => {
+  cyTooltip.textContent = evt.target.data("label");
+  cyTooltip.style.display = "block";
+});
+cy.on("mousemove", "node", (evt) => {
+  const e = evt.originalEvent as MouseEvent;
+  cyTooltip.style.left = `${e.clientX + 12}px`;
+  cyTooltip.style.top = `${e.clientY - 8}px`;
+});
+cy.on("mouseout", "node", () => {
+  cyTooltip.style.display = "none";
+});
+
 // Click a node with `uses` to drill into that workflow
 cy.on("tap", "node[uses]", (evt) => {
   const uses: string = evt.target.data("uses");
@@ -112,7 +131,7 @@ toggleBtn.addEventListener("click", () => {
     "transitionend",
     () => {
       cy.resize();
-      cy.fit();
+      cy.fit(cy.elements(), 40);
     },
     { once: true },
   );
@@ -132,6 +151,7 @@ const editor = new EditorView({
   extensions: [
     basicSetup,
     yaml(),
+    oneDark,
     EditorView.updateListener.of((update) => {
       if (!update.docChanged) return;
       clearTimeout(debounceTimer);
