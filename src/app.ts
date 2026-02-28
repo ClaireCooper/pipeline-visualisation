@@ -1,3 +1,5 @@
+import { EditorView, basicSetup } from "codemirror";
+import { yaml } from "@codemirror/lang-yaml";
 import cytoscape from "cytoscape";
 import dagre from "cytoscape-dagre";
 
@@ -10,7 +12,6 @@ import type { NavStack } from "./navigation";
 import type { ParsedPipeline } from "./parser";
 
 // DOM elements
-const yamlInput = document.getElementById("yaml-input") as HTMLTextAreaElement;
 const fileInput = document.getElementById("file-input") as HTMLInputElement;
 const errorMsg = document.getElementById("error-msg") as HTMLDivElement;
 const backBtn = document.getElementById("back-btn") as HTMLButtonElement;
@@ -109,21 +110,29 @@ backBtn.addEventListener("click", () => {
   updateBreadcrumb();
 });
 
-// Debounced parse on textarea input
+// CodeMirror editor with debounced parse on change
 let debounceTimer: ReturnType<typeof setTimeout>;
-yamlInput.addEventListener("input", () => {
-  clearTimeout(debounceTimer);
-  debounceTimer = setTimeout(() => {
-    const result = parse(yamlInput.value);
-    if (result.ok) {
-      onParsed(result.pipeline);
-    } else {
-      errorMsg.textContent = result.error;
-    }
-  }, 300);
+const editor = new EditorView({
+  extensions: [
+    basicSetup,
+    yaml(),
+    EditorView.updateListener.of((update) => {
+      if (!update.docChanged) return;
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        const result = parse(editor.state.doc.toString());
+        if (result.ok) {
+          onParsed(result.pipeline);
+        } else {
+          errorMsg.textContent = result.error;
+        }
+      }, 300);
+    }),
+  ],
+  parent: document.getElementById("yaml-input")!,
 });
 
-// File upload — read into textarea, then trigger parse
+// File upload — load into editor, parse fires via updateListener
 fileInput.addEventListener("change", () => {
   const file = fileInput.files?.[0];
   if (!file) return;
@@ -131,8 +140,9 @@ fileInput.addEventListener("change", () => {
   reader.onload = (e) => {
     const text = e.target?.result;
     if (typeof text !== "string") return;
-    yamlInput.value = text;
-    yamlInput.dispatchEvent(new Event("input"));
+    editor.dispatch({
+      changes: { from: 0, to: editor.state.doc.length, insert: text },
+    });
   };
   reader.readAsText(file);
 });
