@@ -18,6 +18,8 @@ const backBtn = document.getElementById("back-btn") as HTMLButtonElement;
 const breadcrumbText = document.getElementById(
   "breadcrumb-text",
 ) as HTMLSpanElement;
+const editorPane = document.getElementById("editor-pane") as HTMLDivElement;
+const toggleBtn = document.getElementById("toggle-btn") as HTMLButtonElement;
 
 // State
 let navStack: NavStack | null = null;
@@ -100,6 +102,20 @@ cy.on("tap", "node[uses]", (evt) => {
   navStack = push(navStack, uses);
   renderWorkflow(uses);
   updateBreadcrumb();
+});
+
+// Editor toggle
+toggleBtn.addEventListener("click", () => {
+  const collapsed = editorPane.classList.toggle("collapsed");
+  toggleBtn.textContent = collapsed ? "›" : "‹";
+  editorPane.addEventListener(
+    "transitionend",
+    () => {
+      cy.resize();
+      cy.fit();
+    },
+    { once: true },
+  );
 });
 
 // Back button
