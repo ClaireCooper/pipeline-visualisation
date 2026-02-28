@@ -27,47 +27,49 @@ const cyTooltip = document.getElementById("cy-tooltip") as HTMLDivElement;
 let navStack: NavStack | null = null;
 let pipeline: ParsedPipeline | null = null;
 
+const GRAPH_STYLE: cytoscape.StylesheetStyle[] = [
+  {
+    selector: "node",
+    style: {
+      label: "data(label)",
+      "text-valign": "center",
+      "text-halign": "center",
+      "background-color": "#1e1e1e",
+      "border-width": 1,
+      "border-color": "#c586c0",
+      color: "#c586c0",
+      "font-size": "10px",
+      "font-family": "monospace",
+      "text-wrap": "ellipsis",
+      "text-max-width": 100,
+      width: 120,
+      height: 36,
+      shape: "round-rectangle",
+    },
+  },
+  {
+    selector: "node[uses]",
+    style: {
+      "border-width": 2,
+      "border-style": "double",
+    },
+  },
+  {
+    selector: "edge",
+    style: {
+      width: 1.5,
+      "line-color": "#ce9178",
+      "target-arrow-shape": "none",
+      "curve-style": "taxi",
+      "taxi-direction": "rightward",
+    },
+  },
+];
+
 // Cytoscape instance
 const cy = cytoscape({
   container: document.getElementById("cy"),
-  style: [
-    {
-      selector: "node",
-      style: {
-        label: "data(label)",
-        "text-valign": "center",
-        "text-halign": "center",
-        "background-color": "#1e1e1e",
-        "border-width": 1,
-        "border-color": "#c586c0",
-        color: "#c586c0",
-        "font-size": "10px",
-        "font-family": "monospace",
-        "text-wrap": "ellipsis",
-        "text-max-width": 100,
-        width: 120,
-        height: 36,
-        shape: "round-rectangle",
-      },
-    },
-    {
-      selector: "node[uses]",
-      style: {
-        "border-width": 2,
-        "border-style": "double",
-      },
-    },
-    {
-      selector: "edge",
-      style: {
-        width: 1.5,
-        "line-color": "#ce9178",
-        "target-arrow-shape": "none",
-        "curve-style": "taxi",
-        "taxi-direction": "rightward",
-      },
-    },
-  ],
+  style: GRAPH_STYLE,
 });
 
 function renderWorkflow(workflowName: string): void {
