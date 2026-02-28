@@ -48,4 +48,59 @@ workflows:
     expect(edges).toContainEqual({ source: "test", target: "deploy" });
     expect(edges).toHaveLength(2);
   });
+
+  it("preserves the uses field on a node", () => {
+    const yaml = `
+workflows:
+  main:
+    jobs:
+      deploy:
+        uses: deploy-workflow
+  deploy-workflow:
+    jobs:
+      upload:
+        duration: 60
+`;
+    const result = parse(yaml);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    const deployNode = result.pipeline.workflows["main"].nodes.find(
+      (n) => n.id === "deploy",
+    );
+    expect(deployNode?.uses).toBe("deploy-workflow");
+  });
+
+  it("returns an error when uses references a non-existent workflow", () => {
+    const yaml = `
+workflows:
+  main:
+    jobs:
+      deploy:
+        uses: missing-workflow
+`;
+    const result = parse(yaml);
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error).toMatch(/missing-workflow/);
+  });
+
+  it("returns an error for invalid YAML", () => {
+    const result = parse("}{invalid yaml{{");
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error).toMatch(/Invalid YAML/);
+  });
+
+  it("returns an error when top level is not an object", () => {
+    const result = parse("- just\n- a\n- list");
+    expect(result.ok).toBe(false);
+  });
+
+  it("returns an error when workflows key is missing", () => {
+    const result = parse("something: else");
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error).toMatch(/workflows/);
+  });
 });
