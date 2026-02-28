@@ -44,11 +44,11 @@
 
       #yaml-input {
         flex: 1;
-        resize: none;
-        border: none;
-        outline: none;
-        padding: 12px;
-        font-family: monospace;
+        overflow: auto;
+      }
+
+      #yaml-input .cm-editor {
+        height: 100%;
         font-size: 13px;
       }
 
@@ -99,7 +99,7 @@
     </div>
     <div id="main">
       <div id="editor-pane">
-        <textarea id="yaml-input" placeholder="Paste YAML here…"></textarea>
+        <div id="yaml-input"></div>
         <div id="error-msg"></div>
       </div>
       <div id="graph-pane">
