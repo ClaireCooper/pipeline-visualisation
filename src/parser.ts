@@ -24,6 +24,11 @@ export type ParseResult =
   | { ok: true; pipeline: ParsedPipeline }
   | { ok: false; error: string };
 
+function parseNeeds(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.filter((dep): dep is string => typeof dep === "string");
+}
+
 export function parse(yamlText: string): ParseResult {
   let doc: unknown;
   try {
@@ -61,13 +66,8 @@ export function parse(yamlText: string): ParseResult {
       if (typeof job["duration"] === "number") node.duration = job["duration"];
       if (typeof job["uses"] === "string") node.uses = job["uses"];
 
-      const needs = job["needs"];
-      if (Array.isArray(needs)) {
-        for (const dep of needs) {
-          if (typeof dep === "string") {
-            edges.push({ source: dep, target: jobName });
-          }
-        }
+      for (const dep of parseNeeds(job["needs"])) {
+        edges.push({ source: dep, target: jobName });
       }
 
       nodes.push(node);
