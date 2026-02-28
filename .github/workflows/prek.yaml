@@ -1,0 +1,13 @@
+name: Lint
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  run-prek:
+    uses: George-Ogden/actions/.github/workflows/lint.yaml@v4.0.1
