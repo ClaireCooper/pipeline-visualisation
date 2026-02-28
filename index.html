@@ -37,9 +37,40 @@
       #editor-pane {
         width: 360px;
         flex-shrink: 0;
-        border-right: 1px solid #ddd;
         display: flex;
         flex-direction: column;
+        transition: width 0.2s ease;
+        overflow: hidden;
+      }
+
+      #editor-pane.collapsed {
+        width: 0;
+      }
+
+      #editor-toggle {
+        width: 16px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f5f5f5;
+        border-left: 1px solid #ddd;
+        border-right: 1px solid #ddd;
+        cursor: pointer;
+      }
+
+      #editor-toggle button {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 14px;
+        color: #666;
+        padding: 4px 2px;
+        line-height: 1;
+      }
+
+      #editor-toggle button:hover {
+        color: #222;
       }
 
       #yaml-input {
@@ -101,6 +132,9 @@
       <div id="editor-pane">
         <div id="yaml-input"></div>
         <div id="error-msg"></div>
+      </div>
+      <div id="editor-toggle">
+        <button id="toggle-btn" title="Toggle editor">‹</button>
       </div>
       <div id="graph-pane">
         <div id="breadcrumb">
