@@ -61,6 +61,20 @@ function calculateDuration(node: JobNode, pipeline: ParsedPipeline): number {
     : criticalPathDuration(node.uses ?? "", pipeline);
 }
 
+export function hasMissingDurations(
+  workflow: Workflow,
+  pipeline: ParsedPipeline,
+): boolean {
+  return workflow.nodes.some((node) => {
+    if (node.duration !== undefined) return false;
+    if (node.uses !== undefined) {
+      const sub = pipeline.workflows[node.uses];
+      return sub !== undefined && hasMissingDurations(sub, pipeline);
+    }
+    return true;
+  });
+}
+
 function startTime(
   id: string,
   prereqs: Map<string, string[]>,

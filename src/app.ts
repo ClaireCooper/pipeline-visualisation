@@ -6,6 +6,8 @@ import { createNavStack, push, pop, current } from "./navigation";
 import type { NavStack } from "./navigation";
 import type { ParsedPipeline } from "./parser";
 import { renderGantt, initGantt } from "./gantt";
+import { hasMissingDurations } from "./scheduler";
+import { showTooltip, hideTooltip } from "./tooltip";
 
 // DOM elements
 const backBtn = document.getElementById("back-btn") as HTMLButtonElement;
@@ -38,8 +40,30 @@ function drillDown(uses: string): void {
   updateBreadcrumb();
 }
 
+function updateToggleState(): void {
+  if (!pipeline || !navStack) return;
+  const wf = pipeline.workflows[current(navStack)];
+  if (!wf) return;
+  const missing = hasMissingDurations(wf, pipeline);
+  if (missing) {
+    viewToggleBtn.setAttribute("aria-disabled", "true");
+    viewToggleBtn.setAttribute(
+      "aria-label",
+      "Toggle view (all jobs must have a duration)",
+    );
+  } else {
+    viewToggleBtn.removeAttribute("aria-disabled");
+    viewToggleBtn.setAttribute("aria-label", "Toggle view");
+  }
+  if (missing && view === "gantt") {
+    view = "graph";
+    viewToggleBtn.setAttribute("aria-checked", "false");
+  }
+}
+
 function render(): void {
   if (!pipeline || !navStack) return;
+  updateToggleState();
   const wf = current(navStack);
   if (view === "graph") {
     ganttEl.style.display = "none";
@@ -92,6 +116,7 @@ toggleBtn.addEventListener("click", () => {
 
 // View toggle (Graph ↔ Gantt)
 viewToggleBtn.addEventListener("click", () => {
+  if (viewToggleBtn.getAttribute("aria-disabled") === "true") return;
   view = view === "graph" ? "gantt" : "graph";
   viewToggleBtn.setAttribute(
     "aria-checked",
@@ -99,6 +124,18 @@ viewToggleBtn.addEventListener("click", () => {
   );
   render();
 });
+
+// Toggle tooltip when disabled
+viewToggleBtn.addEventListener("mouseenter", (e) => {
+  if (viewToggleBtn.getAttribute("aria-disabled") === "true") {
+    showTooltip(
+      "All jobs must have a duration to view a Gantt chart",
+      e.clientX,
+      e.clientY,
+    );
+  }
+});
+viewToggleBtn.addEventListener("mouseleave", () => hideTooltip());
 
 // Back button
 backBtn.addEventListener("click", () => {
