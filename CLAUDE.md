@@ -25,19 +25,24 @@ This is a single-page TypeScript app built with Vite that visualises CI/CD pipel
 **Data flow:**
 
 1. `editor.ts` — CodeMirror editor watches for YAML changes (300 ms debounce) and calls `parse()`
-2. `parser.ts` — parses YAML into `ParsedPipeline` (a map of workflow name → `Workflow` with `nodes[]` and `edges[]`); returns a discriminated union `ParseResult`
+2. `parser.ts` — parses YAML into `ParsedPipeline` (a map of workflow name → `Workflow` with `nodes[]` and `edges[]`); returns a discriminated union `ParseResult`; detects circular `uses` references
 3. `elements.ts` — converts a `Workflow` into Cytoscape element descriptors (`CyElement[]`)
 4. `graph.ts` — owns the `cytoscape` instance; `renderWorkflow()` clears and reloads elements using the dagre layout
-5. `app.ts` — wires everything together, owns the `NavStack` state for drill-down navigation between workflows
-6. `navigation.ts` — pure immutable helpers (`push`/`pop`/`current`) for the workflow navigation stack
+5. `scheduler.ts` — pure scheduling logic; `calculateScheduledJobs()` topologically sorts a workflow and assigns start/end times to each job; `criticalPathDuration()` returns the total span
+6. `gantt.ts` — renders a zoomable SVG Gantt chart from `ScheduledJob[]`; `assignRows()` packs bars vertically to minimise rows; bars show truncated labels and duration tooltips
+7. `app.ts` — wires everything together; owns the `NavStack` state for drill-down navigation; manages the graph/Gantt view toggle
+8. `navigation.ts` — pure immutable helpers (`push`/`pop`/`current`) for the workflow navigation stack
 
-**Key data types** (all in `parser.ts`):
+**Key data types:**
 
-- `ParsedPipeline` — `{ workflows: Record<string, Workflow> }`
-- `Workflow` — `{ nodes: JobNode[], edges: Edge[] }`
-- `JobNode` — `{ id, duration?, uses? }` — `uses` means this job delegates to another named workflow
+- `ParsedPipeline` — `{ workflows: Record<string, Workflow> }` (in `parser.ts`)
+- `Workflow` — `{ nodes: JobNode[], edges: Edge[] }` (in `parser.ts`)
+- `JobNode` — `{ id, duration?, uses? }` — `uses` means this job delegates to another named workflow (in `parser.ts`)
+- `ScheduledJob` — `{ id, start, end, uses? }` — job with computed start/end times in minutes (in `scheduler.ts`)
 
 **Drill-down navigation:** Clicking a node with a `uses` field pushes that workflow onto the `NavStack` and re-renders. The breadcrumb and back button in `app.ts` reflect this stack.
+
+**Gantt view:** A toggle in `app.ts` switches between the dependency graph and a Gantt chart. The Gantt chart is rendered as an inline SVG by `gantt.ts`, sized to fit the container width, with zoom/pan via mouse wheel and drag.
 
 ## Branch names
 
