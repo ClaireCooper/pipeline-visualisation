@@ -298,8 +298,8 @@ body {
 .tab {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
+  gap: 7px;
+  padding: 4px 7px;
   font-size: 12px;
   font-family: monospace;
   color: #858585;
@@ -365,7 +365,7 @@ body {
   background: none;
   border: none;
   cursor: pointer;
-  padding: 2px 8px;
+  padding: 2px 4px;
   line-height: 1;
   border-radius: 3px;
   margin-left: 2px;
