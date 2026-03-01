@@ -1,48 +1,34 @@
 import type { ParsedPipeline } from "./parser";
-import { type ScheduledJob, scheduledJobs } from "./scheduler";
+import { calculateScheduledJobs, type ScheduledJob } from "./scheduler";
 
-// --- Rendering ---
-
-const ROW_H = 32; // px height per job row
-const BAR_H = 20; // px height of each bar
-// TOP_P must be >= 10 to keep AXIS_LINE_Y and AXIS_LABEL_Y within the SVG viewport
-const TOP_P = 24; // px top padding (axis area)
+const ROW_H = 32;
+const BAR_H = 20;
+// TOP_PADDING must be >= 10 to keep AXIS_TICK_LINE_Y and AXIS_LABEL_Y within the SVG viewport
+const TOP_PADDING = 24; // px top padding (axis area)
 const MIN_BAR_LABEL_W = 30;
-const SIDE_P = 16; // px right padding
-const BOT_P = 8; // px bottom padding
-const AXIS_LINE_Y = TOP_P - 4; // y of the axis tick line, just above the chart area
-const AXIS_LABEL_Y = TOP_P - 6; // y of axis text labels, 2px above the tick line
+const RIGHT_PADDING = 1; // px right padding
+const BOTTOM_PADDING = 8; // px bottom padding
+const AXIS_TICK_LINE_Y = TOP_PADDING - 4;
+const AXIS_LABEL_Y = TOP_PADDING - 6;
 
 function svgEl<T extends SVGElement>(tag: string): T {
   return document.createElementNS("http://www.w3.org/2000/svg", tag) as T;
 }
 
-function buildSvg(
-  jobs: ScheduledJob[],
-  onDrillDown: (uses: string) => void,
-  contentW: number,
-): { svg: SVGSVGElement; w: number; h: number } {
-  const rawMax = jobs.reduce((m, j) => Math.max(m, j.end), 0);
-  const maxEnd = rawMax > 0 ? rawMax : 1; // floor to 1 to avoid division by zero
-  const chartW = contentW - SIDE_P;
-  const pxPerUnit = chartW / maxEnd;
-  const svgW = contentW;
-  const svgH = TOP_P + jobs.length * ROW_H + BOT_P;
-
-  const svg = svgEl<SVGSVGElement>("svg");
-  svg.setAttribute("viewBox", `0 0 ${svgW} ${svgH}`);
-  svg.style.cssText = `width:${svgW}px;height:${svgH}px;display:block;`;
-
-  // Axis line
+function buildAxis(
+  svg: SVGSVGElement,
+  chartW: number,
+  rawMax: number,
+  pxPerUnit: number,
+): void {
   const axisLine = svgEl<SVGLineElement>("line");
   axisLine.setAttribute("x1", "0");
   axisLine.setAttribute("x2", String(chartW));
-  axisLine.setAttribute("y1", String(AXIS_LINE_Y));
-  axisLine.setAttribute("y2", String(AXIS_LINE_Y));
+  axisLine.setAttribute("y1", String(AXIS_TICK_LINE_Y));
+  axisLine.setAttribute("y2", String(AXIS_TICK_LINE_Y));
   axisLine.setAttribute("class", "gantt-axis-tick");
   svg.appendChild(axisLine);
 
-  // Axis start/end labels
   for (const [val, anchor] of [
     [0, "start"],
     [rawMax, "end"],
@@ -55,39 +41,66 @@ function buildSvg(
     t.textContent = String(val);
     svg.appendChild(t);
   }
+}
 
+function buildJobRow(
+  svg: SVGSVGElement,
+  job: ScheduledJob,
+  rowIndex: number,
+  pxPerUnit: number,
+  onDrillDown: (uses: string) => void,
+): void {
+  const rowY = TOP_PADDING + rowIndex * ROW_H;
+  const barX = job.start * pxPerUnit;
+  const barW = Math.max(2, (job.end - job.start) * pxPerUnit);
+  const barY = rowY + (ROW_H - BAR_H) / 2;
+
+  const rect = svgEl<SVGRectElement>("rect");
+  rect.setAttribute("x", String(barX));
+  rect.setAttribute("y", String(barY));
+  rect.setAttribute("width", String(barW));
+  rect.setAttribute("height", String(BAR_H));
+  rect.setAttribute(
+    "class",
+    job.uses ? "gantt-bar gantt-bar--uses" : "gantt-bar",
+  );
+  if (job.uses) {
+    const uses = job.uses;
+    rect.addEventListener("click", () => onDrillDown(uses));
+  }
+  svg.appendChild(rect);
+
+  if (barW > MIN_BAR_LABEL_W) {
+    const barLabel = svgEl<SVGTextElement>("text");
+    barLabel.setAttribute("x", String(barX + 4));
+    barLabel.setAttribute("y", String(barY + BAR_H / 2));
+    barLabel.setAttribute("dominant-baseline", "middle");
+    barLabel.setAttribute("class", "gantt-label");
+    barLabel.textContent = job.id;
+    svg.appendChild(barLabel);
+  }
+}
+
+function buildSvg(
+  jobs: ScheduledJob[],
+  onDrillDown: (uses: string) => void,
+  contentW: number,
+): { svg: SVGSVGElement; w: number; h: number } {
+  const svg = svgEl<SVGSVGElement>("svg");
+
+  const svgW = contentW;
+  const svgH = TOP_PADDING + jobs.length * ROW_H + BOTTOM_PADDING;
+
+  svg.setAttribute("viewBox", `0 0 ${svgW} ${svgH}`);
+  svg.style.cssText = `width:${svgW}px;height:${svgH}px;display:block;`;
+
+  const rawMax = jobs.reduce((m, j) => Math.max(m, j.end), 0);
+  const chartW = contentW - RIGHT_PADDING;
+  const pxPerUnit = chartW / (rawMax > 0 ? rawMax : 1);
+
+  buildAxis(svg, chartW, rawMax, pxPerUnit);
   for (const [i, job] of jobs.entries()) {
-    const rowY = TOP_P + i * ROW_H;
-    const barX = job.start * pxPerUnit;
-    const barW = Math.max(2, (job.end - job.start) * pxPerUnit);
-    const barY = rowY + (ROW_H - BAR_H) / 2;
-
-    // Bar
-    const rect = svgEl<SVGRectElement>("rect");
-    rect.setAttribute("x", String(barX));
-    rect.setAttribute("y", String(barY));
-    rect.setAttribute("width", String(barW));
-    rect.setAttribute("height", String(BAR_H));
-    rect.setAttribute(
-      "class",
-      job.uses ? "gantt-bar gantt-bar--uses" : "gantt-bar",
-    );
-    if (job.uses) {
-      const uses = job.uses;
-      rect.addEventListener("click", () => onDrillDown(uses));
-    }
-    svg.appendChild(rect);
-
-    // Bar label (only if bar is wide enough)
-    if (barW > MIN_BAR_LABEL_W) {
-      const barLabel = svgEl<SVGTextElement>("text");
-      barLabel.setAttribute("x", String(barX + 4));
-      barLabel.setAttribute("y", String(barY + BAR_H / 2));
-      barLabel.setAttribute("dominant-baseline", "middle");
-      barLabel.setAttribute("class", "gantt-label");
-      barLabel.textContent = job.id;
-      svg.appendChild(barLabel);
-    }
+    buildJobRow(svg, job, i, pxPerUnit, onDrillDown);
   }
 
   return { svg, w: svgW, h: svgH };
@@ -130,7 +143,7 @@ export function renderGantt(
   const workflow = pipeline.workflows[workflowName];
   if (!workflow) return;
 
-  const jobs = scheduledJobs(workflow, pipeline);
+  const jobs = calculateScheduledJobs(workflow, pipeline);
   if (jobs.length === 0) return;
 
   ganttScale = 1;

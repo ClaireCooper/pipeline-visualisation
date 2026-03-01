@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { scheduledJobs, criticalPathDuration } from "./scheduler";
+import { calculateScheduledJobs, criticalPathDuration } from "./scheduler";
 import type { Workflow, ParsedPipeline } from "./parser";
 
 const emptyPipeline: ParsedPipeline = { workflows: {} };
@@ -13,7 +13,7 @@ describe("scheduledJobs", () => {
       ],
       edges: [],
     };
-    const result = scheduledJobs(workflow, emptyPipeline);
+    const result = calculateScheduledJobs(workflow, emptyPipeline);
     expect(result.find((j) => j.id === "a")).toEqual({
       id: "a",
       start: 0,
@@ -34,7 +34,7 @@ describe("scheduledJobs", () => {
       ],
       edges: [{ source: "a", target: "b" }],
     };
-    const result = scheduledJobs(workflow, emptyPipeline);
+    const result = calculateScheduledJobs(workflow, emptyPipeline);
     expect(result.find((j) => j.id === "a")).toEqual({
       id: "a",
       start: 0,
@@ -59,7 +59,7 @@ describe("scheduledJobs", () => {
         { source: "b", target: "c" },
       ],
     };
-    const result = scheduledJobs(workflow, emptyPipeline);
+    const result = calculateScheduledJobs(workflow, emptyPipeline);
     expect(result.find((j) => j.id === "c")).toEqual({
       id: "c",
       start: 20,
@@ -80,7 +80,7 @@ describe("scheduledJobs", () => {
       nodes: [{ id: "deploy", uses: "sub" }],
       edges: [],
     };
-    const result = scheduledJobs(workflow, pipeline);
+    const result = calculateScheduledJobs(workflow, pipeline);
     expect(result.find((j) => j.id === "deploy")).toEqual({
       id: "deploy",
       start: 0,
