@@ -39,6 +39,16 @@ This is a single-page TypeScript app built with Vite that visualises CI/CD pipel
 
 **Drill-down navigation:** Clicking a node with a `uses` field pushes that workflow onto the `NavStack` and re-renders. The breadcrumb and back button in `app.ts` reflect this stack.
 
+## Branch names
+
+Kebab-case description of the work:
+
+```
+add-navigation-stack
+fix-parser-bug
+refactor-graph-layout
+```
+
 ## Commit messages
 
 Imperative mood, sentence case, no trailing period. For scoped changes, append the filename:
