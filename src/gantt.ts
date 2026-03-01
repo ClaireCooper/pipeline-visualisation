@@ -1,5 +1,6 @@
 import type { ParsedPipeline } from "./parser";
 import { calculateScheduledJobs, type ScheduledJob } from "./scheduler";
+import { showTooltip, hideTooltip } from "./tooltip";
 
 const ROW_H = 32;
 const BAR_H = 20;
@@ -38,8 +39,6 @@ export function assignRows(jobs: ScheduledJob[]): Map<string, number> {
 
   return result;
 }
-
-const ganttTooltip = document.getElementById("cy-tooltip") as HTMLDivElement;
 
 function svgEl<T extends SVGElement>(tag: string): T {
   return document.createElementNS("http://www.w3.org/2000/svg", tag) as T;
@@ -151,13 +150,14 @@ function buildJobRow(
   }
   rect.addEventListener("mousemove", (e) => {
     const duration = job.end - job.start;
-    ganttTooltip.textContent = `${job.id} (${formatDuration(duration, duration >= 3600)})`;
-    ganttTooltip.style.display = "block";
-    ganttTooltip.style.left = `${e.clientX + 12}px`;
-    ganttTooltip.style.top = `${e.clientY - 8}px`;
+    showTooltip(
+      `${job.id} (${formatDuration(duration, duration >= 3600)})`,
+      e.clientX,
+      e.clientY,
+    );
   });
   rect.addEventListener("mouseout", () => {
-    ganttTooltip.style.display = "none";
+    hideTooltip();
   });
   svg.appendChild(rect);
 

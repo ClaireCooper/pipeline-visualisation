@@ -2,6 +2,7 @@ import cytoscape from "cytoscape";
 import dagre from "cytoscape-dagre";
 import { buildElements } from "./elements";
 import type { ParsedPipeline } from "./parser";
+import { showTooltip, hideTooltip } from "./tooltip";
 
 cytoscape.use(dagre);
 
@@ -50,20 +51,13 @@ export const cy = cytoscape({
   style: GRAPH_STYLE,
 });
 
-const cyTooltip = document.getElementById("cy-tooltip") as HTMLDivElement;
-
 export function initTooltip(): void {
-  cy.on("mouseover", "node", (evt) => {
-    cyTooltip.textContent = evt.target.data("label");
-    cyTooltip.style.display = "block";
-  });
   cy.on("mousemove", "node", (evt) => {
     const e = evt.originalEvent as MouseEvent;
-    cyTooltip.style.left = `${e.clientX + 12}px`;
-    cyTooltip.style.top = `${e.clientY - 8}px`;
+    showTooltip(evt.target.data("label") as string, e.clientX, e.clientY);
   });
   cy.on("mouseout", "node", () => {
-    cyTooltip.style.display = "none";
+    hideTooltip();
   });
 }
 
