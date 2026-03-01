@@ -190,10 +190,10 @@ body {
 
 #gantt {
   flex: 1;
-  overflow: auto;
+  overflow: hidden;
   background: #1e1e1e;
   display: none;
-  padding: 12px;
+  cursor: grab;
 }
 
 .gantt-bar {

@@ -8,11 +8,11 @@ const BAR_H = 20;
 const TOP_PADDING = 24; // px top padding (axis area)
 const MIN_BAR_LABEL_W = 30;
 const RIGHT_PADDING = 3; // px right padding
-const BOTTOM_PADDING = 8; // px bottom padding
 const LABEL_PADDING = 8; // px horizontal padding inside bar (4px each side)
 const CHAR_W = 6; // approximate px per char for monospace 10px
 const AXIS_TICK_LINE_Y = TOP_PADDING - 4;
 const AXIS_LABEL_Y = TOP_PADDING - 6;
+const CONTENT_PADDING = 12; // px padding around chart content
 
 export function assignRows(jobs: ScheduledJob[]): Map<string, number> {
   const sorted = [...jobs].sort((a, b) => b.end - b.start - (a.end - a.start));
@@ -75,7 +75,7 @@ function niceTickInterval(rawMax: number): number {
 }
 
 function buildAxis(
-  svg: SVGSVGElement,
+  parent: Element,
   chartW: number,
   rawMax: number,
   pxPerUnit: number,
@@ -86,7 +86,7 @@ function buildAxis(
   axisLine.setAttribute("y1", String(AXIS_TICK_LINE_Y));
   axisLine.setAttribute("y2", String(AXIS_TICK_LINE_Y));
   axisLine.setAttribute("class", "gantt-axis-tick");
-  svg.appendChild(axisLine);
+  parent.appendChild(axisLine);
 
   const interval = niceTickInterval(rawMax);
   const count = Math.floor(rawMax / interval);
@@ -110,7 +110,7 @@ function buildAxis(
     tick.setAttribute("y1", String(AXIS_TICK_LINE_Y));
     tick.setAttribute("y2", String(AXIS_TICK_LINE_Y + 5));
     tick.setAttribute("class", "gantt-axis-tick");
-    svg.appendChild(tick);
+    parent.appendChild(tick);
 
     const anchor = val === 0 ? "start" : val === rawMax ? "end" : "middle";
     const t = svgEl<SVGTextElement>("text");
@@ -119,12 +119,12 @@ function buildAxis(
     t.setAttribute("text-anchor", anchor);
     t.setAttribute("class", "gantt-axis-label");
     t.textContent = formatDuration(val, includeHours);
-    svg.appendChild(t);
+    parent.appendChild(t);
   }
 }
 
 function buildJobRow(
-  svg: SVGSVGElement,
+  parent: Element,
   job: ScheduledJob,
   rowIndex: number,
   pxPerUnit: number,
@@ -159,7 +159,7 @@ function buildJobRow(
   rect.addEventListener("mouseout", () => {
     hideTooltip();
   });
-  svg.appendChild(rect);
+  parent.appendChild(rect);
 
   if (barW > MIN_BAR_LABEL_W) {
     const barLabel = svgEl<SVGTextElement>("text");
@@ -168,7 +168,7 @@ function buildJobRow(
     barLabel.setAttribute("dominant-baseline", "middle");
     barLabel.setAttribute("class", "gantt-label");
     barLabel.textContent = truncateLabel(job.id, barW);
-    svg.appendChild(barLabel);
+    parent.appendChild(barLabel);
   }
 }
 
@@ -176,52 +176,97 @@ function buildSvg(
   jobs: ScheduledJob[],
   onDrillDown: (uses: string) => void,
   contentW: number,
-): { svg: SVGSVGElement; w: number; h: number } {
+): { svg: SVGSVGElement; g: SVGGElement } {
   const svg = svgEl<SVGSVGElement>("svg");
+  svg.setAttribute("width", "100%");
+  svg.setAttribute("height", "100%");
+
+  const g = svgEl<SVGGElement>("g");
+  svg.appendChild(g);
 
   const rowMap = assignRows(jobs);
-  const numRows = rowMap.size === 0 ? 1 : Math.max(...rowMap.values()) + 1;
-
-  const svgW = contentW;
-  const svgH = TOP_PADDING + numRows * ROW_H + BOTTOM_PADDING;
-
-  svg.setAttribute("viewBox", `0 0 ${svgW} ${svgH}`);
-  svg.style.cssText = `width:${svgW}px;height:${svgH}px;display:block;`;
-
   const rawMax = jobs.reduce((m, j) => Math.max(m, j.end), 0);
   const chartW = contentW - RIGHT_PADDING;
   const pxPerUnit = chartW / (rawMax > 0 ? rawMax : 1);
 
-  buildAxis(svg, chartW, rawMax, pxPerUnit);
+  buildAxis(g, chartW, rawMax, pxPerUnit);
   for (const job of jobs) {
-    buildJobRow(svg, job, rowMap.get(job.id) ?? 0, pxPerUnit, onDrillDown);
+    buildJobRow(g, job, rowMap.get(job.id) ?? 0, pxPerUnit, onDrillDown);
   }
 
-  return { svg, w: svgW, h: svgH };
+  return { svg, g };
 }
 
-// Module-level render state — written by renderGantt, read by the wheel listener in initGantt
+// Module-level render state — written by renderGantt, read by event listeners in initGantt
 let ganttContainer: HTMLDivElement | null = null;
+let contentGroup: SVGGElement | null = null;
+let panX = 0;
+let panY = 0;
 let ganttScale = 1;
-let currentSvg: SVGSVGElement | null = null;
-let naturalW = 0;
-let naturalH = 0;
+
+function updateTransform(): void {
+  if (!contentGroup) return;
+  contentGroup.setAttribute(
+    "transform",
+    `translate(${panX},${panY}) scale(${ganttScale})`,
+  );
+}
 
 export function initGantt(): void {
   const el = document.getElementById("gantt");
   if (!el) throw new Error("#gantt element not found");
   ganttContainer = el as HTMLDivElement;
-  ganttContainer.addEventListener(
+  const container = ganttContainer;
+
+  let dragging = false;
+  let lastX = 0;
+  let lastY = 0;
+
+  container.addEventListener("mousedown", (e) => {
+    dragging = true;
+    lastX = e.clientX;
+    lastY = e.clientY;
+    container.style.cursor = "grabbing";
+    hideTooltip();
+    e.preventDefault();
+  });
+
+  container.addEventListener("mousemove", (e) => {
+    if (!dragging || !contentGroup) return;
+    panX += e.clientX - lastX;
+    panY += e.clientY - lastY;
+    lastX = e.clientX;
+    lastY = e.clientY;
+    updateTransform();
+  });
+
+  container.addEventListener("mouseup", () => {
+    if (!dragging) return;
+    dragging = false;
+    container.style.cursor = "";
+  });
+
+  container.addEventListener("mouseleave", () => {
+    if (!dragging) return;
+    dragging = false;
+    container.style.cursor = "";
+  });
+
+  container.addEventListener(
     "wheel",
     (e) => {
-      if (!currentSvg || !ganttContainer) return;
+      if (!contentGroup) return;
       e.preventDefault();
-      ganttScale = Math.min(
-        4,
-        Math.max(0.25, ganttScale * (e.deltaY < 0 ? 1.1 : 0.9)),
-      );
-      currentSvg.style.width = `${ganttScale * naturalW}px`;
-      currentSvg.style.height = `${ganttScale * naturalH}px`;
+      const f = e.deltaY < 0 ? 1.1 : 0.9;
+      const newScale = Math.min(10, Math.max(0.1, ganttScale * f));
+      const actualF = newScale / ganttScale;
+      const rect = container.getBoundingClientRect();
+      const cx = e.clientX - rect.left;
+      const cy = e.clientY - rect.top;
+      panX = cx - (cx - panX) * actualF;
+      panY = cy - (cy - panY) * actualF;
+      ganttScale = newScale;
+      updateTransform();
     },
     { passive: false },
   );
@@ -240,14 +285,14 @@ export function renderGantt(
   const jobs = calculateScheduledJobs(workflow, pipeline);
   if (jobs.length === 0) return;
 
-  ganttScale = 1;
   jobs.sort((a, b) => a.start - b.start || a.id.localeCompare(b.id));
 
-  // #gantt has padding: 12px on each side; subtract to get the drawable content width
-  const contentW = ganttContainer.clientWidth - 24;
-  const { svg, w, h } = buildSvg(jobs, onDrillDown, contentW);
-  naturalW = w;
-  naturalH = h;
-  currentSvg = svg;
-  ganttContainer.replaceChildren(currentSvg);
+  const contentW = ganttContainer.clientWidth - CONTENT_PADDING * 2;
+  const { svg, g } = buildSvg(jobs, onDrillDown, contentW);
+  contentGroup = g;
+  panX = CONTENT_PADDING;
+  panY = CONTENT_PADDING;
+  ganttScale = 1;
+  updateTransform();
+  ganttContainer.replaceChildren(svg);
 }
