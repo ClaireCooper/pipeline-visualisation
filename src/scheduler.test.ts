@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { scheduledJobs, criticalPathDuration } from "./gantt";
+import { scheduledJobs, criticalPathDuration } from "./scheduler";
 import type { Workflow, ParsedPipeline } from "./parser";
 
 const emptyPipeline: ParsedPipeline = { workflows: {} };
