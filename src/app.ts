@@ -83,6 +83,8 @@ toggleBtn.addEventListener("click", () => {
       if (view === "graph") {
         cy.resize();
         cy.fit(cy.elements(), 40);
+      } else {
+        render();
       }
     },
     { once: true },

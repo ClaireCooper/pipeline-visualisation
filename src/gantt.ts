@@ -101,7 +101,6 @@ export function scheduledJobs(
 
 // --- Rendering ---
 
-const CHART_W = 800; // natural px width of the bar area
 const ROW_H = 32; // px height per job row
 const BAR_H = 20; // px height of each bar
 // TOP_P must be >= 10 to keep AXIS_LINE_Y and AXIS_LABEL_Y within the SVG viewport
@@ -119,11 +118,13 @@ function svgEl<T extends SVGElement>(tag: string): T {
 function buildSvg(
   jobs: ScheduledJob[],
   onDrillDown: (uses: string) => void,
+  contentW: number,
 ): { svg: SVGSVGElement; w: number; h: number } {
   const rawMax = jobs.reduce((m, j) => Math.max(m, j.end), 0);
   const maxEnd = rawMax > 0 ? rawMax : 1; // floor to 1 to avoid division by zero
-  const pxPerUnit = CHART_W / maxEnd;
-  const svgW = CHART_W + SIDE_P;
+  const chartW = contentW - SIDE_P;
+  const pxPerUnit = chartW / maxEnd;
+  const svgW = contentW;
   const svgH = TOP_P + jobs.length * ROW_H + BOT_P;
 
   const svg = svgEl<SVGSVGElement>("svg");
@@ -133,7 +134,7 @@ function buildSvg(
   // Axis line
   const axisLine = svgEl<SVGLineElement>("line");
   axisLine.setAttribute("x1", "0");
-  axisLine.setAttribute("x2", String(CHART_W));
+  axisLine.setAttribute("x2", String(chartW));
   axisLine.setAttribute("y1", String(AXIS_LINE_Y));
   axisLine.setAttribute("y2", String(AXIS_LINE_Y));
   axisLine.setAttribute("class", "gantt-axis-tick");
@@ -204,7 +205,7 @@ export function initGantt(): void {
   ganttContainer.addEventListener(
     "wheel",
     (e) => {
-      if (!currentSvg) return;
+      if (!currentSvg || !ganttContainer) return;
       e.preventDefault();
       ganttScale = Math.min(
         4,
@@ -233,7 +234,9 @@ export function renderGantt(
   ganttScale = 1;
   jobs.sort((a, b) => a.start - b.start || a.id.localeCompare(b.id));
 
-  const { svg, w, h } = buildSvg(jobs, onDrillDown);
+  // #gantt has padding: 12px on each side; subtract to get the drawable content width
+  const contentW = ganttContainer.clientWidth - 24;
+  const { svg, w, h } = buildSvg(jobs, onDrillDown, contentW);
   naturalW = w;
   naturalH = h;
   currentSvg = svg;
