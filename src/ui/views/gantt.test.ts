@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { assignRows, initGantt, renderGantt } from "./gantt";
-import type { ScheduledJob } from "./scheduler";
-import type { ParsedPipeline } from "./parser";
+import type { ScheduledJob } from "../../core/scheduler";
+import type { ParsedPipeline } from "../../core/parser";
 
 describe("assignRows", () => {
   it("places non-overlapping jobs in the same row", () => {

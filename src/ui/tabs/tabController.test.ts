@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { initTabController } from "./tabController";
-import type { ParsedPipeline } from "./parser";
+import type { ParsedPipeline } from "../../core/parser";
 
 function makeVc() {
   return {

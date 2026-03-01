@@ -1,8 +1,8 @@
 import cytoscape from "cytoscape";
 import dagre from "cytoscape-dagre";
-import { buildElements } from "./elements";
-import type { ParsedPipeline } from "./parser";
-import { showTooltip, hideTooltip } from "./tooltip";
+import { buildElements } from "../../core/graph-elements";
+import type { ParsedPipeline } from "../../core/parser";
+import { showTooltip, hideTooltip } from "../tooltip";
 
 cytoscape.use(dagre);
 

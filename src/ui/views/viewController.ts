@@ -1,10 +1,10 @@
 import { cy, renderWorkflow, initTooltip } from "./graph";
 import { renderGantt, initGantt } from "./gantt";
-import { hasMissingDurations } from "./scheduler";
-import { current } from "./navigation";
-import { activeTab } from "./tabs";
-import type { TabState } from "./tabs";
-import { showTooltip, hideTooltip } from "./tooltip";
+import { hasMissingDurations } from "../../core/scheduler";
+import { current } from "../../core/navigation";
+import { activeTab } from "../tabs/tabs";
+import type { TabState } from "../tabs/tabs";
+import { showTooltip, hideTooltip } from "../tooltip";
 
 interface ViewElements {
   cyEl: HTMLDivElement;
