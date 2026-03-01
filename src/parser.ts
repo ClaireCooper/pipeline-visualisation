@@ -88,5 +88,41 @@ export function parse(yamlText: string): ParseResult {
     }
   }
 
+  // Detect circular uses references between workflows
+  const workflowDeps: Record<string, string[]> = {};
+  for (const [wfName, wf] of Object.entries(workflows)) {
+    workflowDeps[wfName] = [
+      ...new Set(
+        wf.nodes
+          .filter((n) => n.uses !== undefined)
+          .map((n) => n.uses as string),
+      ),
+    ];
+  }
+
+  const visited = new Set<string>();
+  const inStack = new Set<string>();
+
+  const hasCycle = (name: string): boolean => {
+    if (inStack.has(name)) return true;
+    if (visited.has(name)) return false;
+    visited.add(name);
+    inStack.add(name);
+    for (const dep of workflowDeps[name] ?? []) {
+      if (hasCycle(dep)) return true;
+    }
+    inStack.delete(name);
+    return false;
+  };
+
+  for (const name of Object.keys(workflows)) {
+    if (hasCycle(name)) {
+      return {
+        ok: false,
+        error: `Circular "uses" reference detected involving workflow "${name}"`,
+      };
+    }
+  }
+
   return { ok: true, pipeline: { workflows } };
 }
