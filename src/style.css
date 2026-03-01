@@ -68,7 +68,7 @@ body {
 }
 
 #editor-pane.collapsed {
-  width: 0;
+  width: 0 !important;
 }
 
 #editor-toggle {
@@ -80,7 +80,7 @@ body {
   background: #252526;
   border-left: 1px solid #3c3c3c;
   border-right: 1px solid #3c3c3c;
-  cursor: pointer;
+  cursor: col-resize;
 }
 
 #editor-toggle button {
