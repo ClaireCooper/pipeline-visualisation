@@ -5,7 +5,7 @@
 }
 
 body {
-  font-family: system-ui, sans-serif;
+  font-family: monospace;
   background: #1e1e1e;
   color: #d4d4d4;
   display: flex;
@@ -25,7 +25,6 @@ body {
 }
 
 #app-title {
-  font-family: monospace;
   font-size: 12px;
   color: #858585;
   flex: 1;
@@ -140,7 +139,6 @@ body {
 
 #error-msg {
   color: #f44747;
-  font-family: monospace;
   font-size: 11px;
   padding: 5px 12px;
   min-height: 22px;
@@ -157,11 +155,9 @@ body {
 }
 
 #breadcrumb {
-  padding: 5px 12px;
+  padding: 10px 12px;
   font-size: 12px;
   color: #858585;
-  background: #252526;
-  border-bottom: 1px solid #3c3c3c;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -194,7 +190,6 @@ body {
   background: #252526;
   border: 1px solid #3c3c3c;
   color: #d4d4d4;
-  font-family: monospace;
   font-size: 11px;
   padding: 4px 8px;
   border-radius: 3px;
@@ -286,7 +281,6 @@ body {
 }
 
 .gantt-label {
-  font-family: monospace;
   font-size: 10px;
   fill: #c586c0;
   pointer-events: none;
@@ -298,7 +292,6 @@ body {
 }
 
 .gantt-axis-label {
-  font-family: monospace;
   font-size: 9px;
   fill: #858585;
 }
@@ -321,7 +314,6 @@ body {
   gap: 7px;
   padding: 4px 7px;
   font-size: 12px;
-  font-family: monospace;
   color: #858585;
   background: transparent;
   border: none;
@@ -338,7 +330,7 @@ body {
 
 .tab.tab-active {
   color: #d4d4d4;
-  border-bottom-color: #c586c0;
+  border-bottom-color: #f9b062;
 }
 
 .tab-label {
@@ -347,10 +339,9 @@ body {
 
 .tab-rename {
   font-size: 12px;
-  font-family: monospace;
   background: #1e1e1e;
   color: #d4d4d4;
-  border: 1px solid #c586c0;
+  border: 1px solid #f9b062;
   border-radius: 2px;
   padding: 0 4px;
   width: 120px;
