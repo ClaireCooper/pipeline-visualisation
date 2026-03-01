@@ -172,20 +172,55 @@ body {
   z-index: 100;
 }
 
-#view-toggle-btn {
+#view-toggle {
   margin-left: auto;
-  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+}
+
+#view-toggle > span {
+  opacity: 0.4;
+}
+
+#view-toggle:has(> button[aria-checked="false"]) > span:first-child {
+  opacity: 1;
+}
+
+#view-toggle:has(> button[aria-checked="true"]) > span:last-child {
+  opacity: 1;
+}
+
+#view-toggle-btn {
+  position: relative;
+  width: 28px;
+  height: 16px;
+  border-radius: 8px;
   background: transparent;
   border: 1px solid #3c3c3c;
-  border-radius: 3px;
-  padding: 2px 8px;
-  font-size: 11px;
-  color: #d4d4d4;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
 }
 
 #view-toggle-btn:hover {
-  background: #2a2d2e;
   border-color: #555;
+}
+
+.toggle-thumb {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #d4d4d4;
+  top: 1px;
+  left: 1px;
+  transition: transform 0.15s ease;
+}
+
+#view-toggle-btn[aria-checked="true"] .toggle-thumb {
+  transform: translateX(12px);
 }
 
 #gantt {

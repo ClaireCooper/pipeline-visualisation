@@ -24,7 +24,6 @@ const ganttEl = document.getElementById("gantt") as HTMLDivElement;
 let navStack: NavStack | null = null;
 let pipeline: ParsedPipeline | null = null;
 let view: "graph" | "gantt" = "graph";
-viewToggleBtn.textContent = view === "graph" ? "Gantt" : "Graph";
 
 function updateBreadcrumb(): void {
   if (!navStack) return;
@@ -94,7 +93,10 @@ toggleBtn.addEventListener("click", () => {
 // View toggle (Graph ↔ Gantt)
 viewToggleBtn.addEventListener("click", () => {
   view = view === "graph" ? "gantt" : "graph";
-  viewToggleBtn.textContent = view === "graph" ? "Gantt" : "Graph";
+  viewToggleBtn.setAttribute(
+    "aria-checked",
+    view === "gantt" ? "true" : "false",
+  );
   render();
 });
 
