@@ -48,7 +48,7 @@ function render(): void {
     renderWorkflow(wf, pipeline);
   } else {
     cyEl.style.display = "none";
-    ganttEl.style.display = "";
+    ganttEl.style.display = "block";
     renderGantt(wf, pipeline, drillDown);
   }
 }

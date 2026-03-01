@@ -103,4 +103,22 @@ workflows:
     if (result.ok) return;
     expect(result.error).toMatch(/workflows/);
   });
+
+  it("returns an error for circular uses references", () => {
+    const yaml = `
+workflows:
+  a:
+    jobs:
+      build:
+        uses: b
+  b:
+    jobs:
+      deploy:
+        uses: a
+`;
+    const result = parse(yaml);
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error).toMatch(/[Cc]ircular/);
+  });
 });
