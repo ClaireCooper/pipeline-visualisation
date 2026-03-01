@@ -26,6 +26,17 @@ repos:
     hooks:
       - id: prettier
 
+  - repo: https://github.com/pre-commit/mirrors-eslint.git
+    rev: v10.0.2
+    hooks:
+      - id: eslint
+        files: \.ts$ # *.js, *.ts
+        types: [file]
+        additional_dependencies:
+          - eslint@10.0.2
+          - "@eslint/js@10.0.1"
+          - typescript-eslint@8.56.1
+
   - repo: https://github.com/rhysd/actionlint/
     rev: v1.7.11
     hooks:

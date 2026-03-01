@@ -31,7 +31,7 @@ export function initEditor(onParsed: (p: ParsedPipeline) => void): {
         }, 300);
       }),
     ],
-    parent: document.getElementById("yaml-input")!,
+    parent: document.getElementById("yaml-input") as HTMLElement,
   });
 
   // File upload — load into editor, parse fires via updateListener
