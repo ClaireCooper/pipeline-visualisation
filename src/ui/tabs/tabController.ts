@@ -124,8 +124,13 @@ export function initTabController(
   function onFileLoaded(filename: string, text: string): void {
     saveCurrentTab();
     const name = filename.replace(/\.(yaml|yml)$/, "");
-    const tab = createTab(name, text);
-    state = addTab(state, tab);
+    const active = activeTab(state);
+    if (active.yaml === "") {
+      state = updateTab(state, state.activeId, { name, yaml: text });
+    } else {
+      const tab = createTab(name, text);
+      state = addTab(state, tab);
+    }
     rerenderTabs();
     loadActiveTab();
   }
