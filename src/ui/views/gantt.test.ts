@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { assignRows, initGantt, renderGantt } from "./gantt";
+import { assignRows, initGantt, renderGantt, resetGanttZoom } from "./gantt";
 import type { ScheduledJob } from "../../core/scheduler";
 import type { ParsedPipeline } from "../../core/parser";
 
@@ -121,5 +121,34 @@ describe("renderGantt pan/zoom", () => {
     container.dispatchEvent(new MouseEvent("mouseup", { bubbles: true }));
     const g = document.querySelector("#gantt svg g");
     expect(g?.getAttribute("transform")).toBe("translate(62,42) scale(1)");
+  });
+
+  it("resets pan and zoom to initial values", () => {
+    renderGantt("build", pipeline, noDrillDown);
+    const container = document.getElementById("gantt");
+    if (!container) throw new Error("no #gantt element");
+    container.dispatchEvent(
+      new WheelEvent("wheel", {
+        deltaY: -100,
+        clientX: 0,
+        clientY: 0,
+        bubbles: true,
+        cancelable: true,
+      }),
+    );
+    container.dispatchEvent(
+      new MouseEvent("mousedown", { clientX: 100, clientY: 50, bubbles: true }),
+    );
+    container.dispatchEvent(
+      new MouseEvent("mousemove", { clientX: 150, clientY: 80, bubbles: true }),
+    );
+    container.dispatchEvent(new MouseEvent("mouseup", { bubbles: true }));
+
+    const g = document.querySelector("#gantt svg g");
+    expect(g?.getAttribute("transform")).not.toBe("translate(12,12) scale(1)");
+
+    resetGanttZoom();
+
+    expect(g?.getAttribute("transform")).toBe("translate(12,12) scale(1)");
   });
 });

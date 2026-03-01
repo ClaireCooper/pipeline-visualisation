@@ -1,5 +1,5 @@
 import { cy, renderWorkflow, initTooltip } from "./graph";
-import { renderGantt, initGantt } from "./gantt";
+import { renderGantt, initGantt, resetGanttZoom } from "./gantt";
 import { hasMissingDurations } from "../../core/scheduler";
 import { current } from "../../core/navigation";
 import { activeTab } from "../tabs/tabs";
@@ -12,6 +12,7 @@ interface ViewElements {
   viewToggleBtn: HTMLButtonElement;
   backBtn: HTMLButtonElement;
   breadcrumbText: HTMLSpanElement;
+  zoomResetBtn: HTMLButtonElement;
 }
 
 export function initViewController(elements: ViewElements) {
@@ -118,6 +119,13 @@ export function initViewController(elements: ViewElements) {
       }
     });
     elements.viewToggleBtn.addEventListener("mouseleave", () => hideTooltip());
+    elements.zoomResetBtn.addEventListener("click", () => {
+      if (view === "graph") {
+        cy.fit(cy.elements(), 40);
+      } else {
+        resetGanttZoom();
+      }
+    });
   }
 
   return { render, updateBreadcrumb, resetView, getView, bindEvents };
