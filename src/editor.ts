@@ -8,8 +8,15 @@ import type { ParsedPipeline } from "./parser";
 const errorMsg = document.getElementById("error-msg") as HTMLDivElement;
 const fileInput = document.getElementById("file-input") as HTMLInputElement;
 
-export function initEditor(onParsed: (p: ParsedPipeline) => void): {
+export function initEditor(
+  onParsed: (p: ParsedPipeline) => void,
+  onFileLoaded: (filename: string, text: string) => void = () => {
+    /* no-op */
+  },
+): {
   clearError: () => void;
+  setContent: (text: string) => void;
+  getContent: () => string;
 } {
   let debounceTimer: ReturnType<typeof setTimeout>;
 
@@ -22,7 +29,12 @@ export function initEditor(onParsed: (p: ParsedPipeline) => void): {
         if (!update.docChanged) return;
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {
-          const result = parse(editor.state.doc.toString());
+          const text = editor.state.doc.toString();
+          if (!text.trim()) {
+            clearError();
+            return;
+          }
+          const result = parse(text);
           if (result.ok) {
             onParsed(result.pipeline);
           } else {
@@ -34,7 +46,7 @@ export function initEditor(onParsed: (p: ParsedPipeline) => void): {
     parent: document.getElementById("yaml-input") as HTMLElement,
   });
 
-  // File upload — load into editor, parse fires via updateListener
+  // File upload — notify app.ts so it can create a new tab
   fileInput.addEventListener("change", () => {
     const file = fileInput.files?.[0];
     if (!file) return;
@@ -42,9 +54,9 @@ export function initEditor(onParsed: (p: ParsedPipeline) => void): {
     reader.onload = (e) => {
       const text = e.target?.result;
       if (typeof text !== "string") return;
-      editor.dispatch({
-        changes: { from: 0, to: editor.state.doc.length, insert: text },
-      });
+      // Reset so the same file can be uploaded again
+      fileInput.value = "";
+      onFileLoaded(file.name, text);
     };
     reader.readAsText(file);
   });
@@ -53,5 +65,15 @@ export function initEditor(onParsed: (p: ParsedPipeline) => void): {
     errorMsg.textContent = "";
   }
 
-  return { clearError };
+  function setContent(text: string): void {
+    editor.dispatch({
+      changes: { from: 0, to: editor.state.doc.length, insert: text },
+    });
+  }
+
+  function getContent(): string {
+    return editor.state.doc.toString();
+  }
+
+  return { clearError, setContent, getContent };
 }

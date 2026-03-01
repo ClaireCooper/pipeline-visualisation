@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import type { TabState } from "./tabs";
 import {
   createTabState,
   createTab,
