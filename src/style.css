@@ -152,6 +152,7 @@ body {
   flex-direction: column;
   overflow: hidden;
   background: #1e1e1e;
+  position: relative;
 }
 
 #breadcrumb {
@@ -261,6 +262,30 @@ body {
   background: #1e1e1e;
   display: none;
   cursor: grab;
+}
+
+#zoom-reset-btn {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  background: #252526;
+  border: 1px solid #3c3c3c;
+  border-radius: 3px;
+  padding: 5px 6px;
+  cursor: pointer;
+  color: #d4d4d4;
+  display: flex;
+  align-items: center;
+  z-index: 10;
+}
+
+#zoom-reset-btn:hover {
+  background: #2a2d2e;
+  border-color: #555;
+}
+
+#zoom-reset-btn svg {
+  fill: currentColor;
 }
 
 .gantt-bar {

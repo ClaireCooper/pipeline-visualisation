@@ -215,6 +215,13 @@ function updateTransform(): void {
   );
 }
 
+export function resetGanttZoom(): void {
+  panX = CONTENT_PADDING;
+  panY = CONTENT_PADDING;
+  ganttScale = 1;
+  updateTransform();
+}
+
 export function initGantt(): void {
   const el = document.getElementById("gantt");
   if (!el) throw new Error("#gantt element not found");

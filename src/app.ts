@@ -20,6 +20,9 @@ const viewToggleBtn = document.getElementById(
 const cyEl = document.getElementById("cy") as HTMLDivElement;
 const ganttEl = document.getElementById("gantt") as HTMLDivElement;
 const tabBarEl = document.getElementById("tab-bar") as HTMLDivElement;
+const zoomResetBtn = document.getElementById(
+  "zoom-reset-btn",
+) as HTMLButtonElement;
 
 const vc = initViewController({
   cyEl,
@@ -27,6 +30,7 @@ const vc = initViewController({
   viewToggleBtn,
   backBtn,
   breadcrumbText,
+  zoomResetBtn,
 });
 
 const tc = initTabController(tabBarEl, vc, initEditor);
