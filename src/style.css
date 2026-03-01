@@ -282,3 +282,96 @@ body {
   font-size: 9px;
   fill: #858585;
 }
+
+#tab-bar {
+  display: flex;
+  align-items: center;
+  background: #252526;
+  border-bottom: 1px solid #3c3c3c;
+  padding: 0 8px;
+  gap: 2px;
+  flex-shrink: 0;
+  overflow-x: auto;
+  min-height: 30px;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-family: monospace;
+  color: #858585;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.tab:hover {
+  color: #d4d4d4;
+  background: #2a2d2e;
+}
+
+.tab.tab-active {
+  color: #d4d4d4;
+  border-bottom-color: #c586c0;
+}
+
+.tab-label {
+  cursor: pointer;
+}
+
+.tab-rename {
+  font-size: 12px;
+  font-family: monospace;
+  background: #1e1e1e;
+  color: #d4d4d4;
+  border: 1px solid #c586c0;
+  border-radius: 2px;
+  padding: 0 4px;
+  width: 120px;
+  outline: none;
+}
+
+.tab-close {
+  font-size: 10px;
+  color: transparent;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
+  border-radius: 2px;
+}
+
+.tab:hover .tab-close,
+.tab.tab-active .tab-close {
+  color: #858585;
+}
+
+.tab:hover .tab-close:hover,
+.tab.tab-active .tab-close:hover {
+  color: #d4d4d4;
+  background: #3c3c3c;
+}
+
+.tab-add {
+  font-size: 16px;
+  color: #858585;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 8px;
+  line-height: 1;
+  border-radius: 3px;
+  margin-left: 2px;
+}
+
+.tab-add:hover {
+  color: #d4d4d4;
+  background: #2a2d2e;
+}
