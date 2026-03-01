@@ -213,6 +213,27 @@ describe("initTabController", () => {
     });
   });
 
+  describe("downloadActive", () => {
+    it("triggers download of active tab yaml with tab name as filename", () => {
+      const editor = makeEditor("jobs:\n  build: {}");
+      const tc = initTabController(container, makeVc(), () => editor);
+      tc.renameTab(tc.getState().activeId, "my-pipeline");
+
+      URL.createObjectURL = vi.fn().mockReturnValue("blob:fake");
+      URL.revokeObjectURL = vi.fn();
+      const anchor = document.createElement("a");
+      const clickSpy = vi.fn();
+      anchor.click = clickSpy;
+      vi.spyOn(document, "createElement").mockReturnValueOnce(anchor);
+
+      tc.downloadActive();
+
+      expect(anchor.download).toBe("my-pipeline.yaml");
+      expect(clickSpy).toHaveBeenCalled();
+      expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:fake");
+    });
+  });
+
   describe("back", () => {
     it("pops the navStack and calls vc.render", () => {
       const vc = makeVc();

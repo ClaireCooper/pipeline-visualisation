@@ -145,9 +145,26 @@ export function initTabController(
     vc.updateBreadcrumb(state);
   }
 
+  function downloadActive(): void {
+    const name = activeTab(state).name;
+    const yaml = editor.getContent();
+    const filename = `${name}.yaml`;
+    const blob = new Blob([yaml], { type: "text/yaml" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   function getState(): TabState {
     return state;
   }
+
+  document
+    .getElementById("save-btn")
+    ?.addEventListener("click", downloadActive);
 
   rerenderTabs();
 
@@ -157,6 +174,7 @@ export function initTabController(
     onFileLoaded,
     drillDown,
     back,
+    downloadActive,
     // Exposed for tab bar callbacks (also useful for testing)
     switchTab,
     closeTab,
