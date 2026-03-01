@@ -220,13 +220,6 @@ body {
   pointer-events: none;
 }
 
-.gantt-row-label {
-  font-family: monospace;
-  font-size: 10px;
-  fill: #d4d4d4;
-  pointer-events: none;
-}
-
 .gantt-axis-tick {
   stroke: #3c3c3c;
   stroke-width: 1;
