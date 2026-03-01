@@ -76,6 +76,7 @@ export function renderWorkflow(
 
   cy.elements().remove();
   cy.add(buildElements(workflow));
+  cy.resize();
   cy.layout({
     name: "dagre",
     rankDir: "LR",
@@ -83,4 +84,5 @@ export function renderWorkflow(
     rankSep: 120,
     nodeSep: 10,
   } as cytoscape.LayoutOptions).run();
+  cy.fit(cy.elements(), 40);
 }
