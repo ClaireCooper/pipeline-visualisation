@@ -23,7 +23,18 @@
         <div id="breadcrumb">
           <button id="back-btn">← back</button>
           <span id="breadcrumb-text"></span>
-          <button id="view-toggle-btn">Gantt</button>
+          <div id="view-toggle">
+            <span>Graph</span>
+            <button
+              id="view-toggle-btn"
+              role="switch"
+              aria-checked="false"
+              title="Toggle view"
+            >
+              <span class="toggle-thumb"></span>
+            </button>
+            <span>Gantt</span>
+          </div>
         </div>
         <div id="cy"></div>
         <div id="gantt"></div>
