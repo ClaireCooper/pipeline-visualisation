@@ -80,5 +80,7 @@ export function renderWorkflow(
     name: "dagre",
     rankDir: "LR",
     padding: 40,
+    rankSep: 120,
+    nodeSep: 10,
   } as cytoscape.LayoutOptions).run();
 }
