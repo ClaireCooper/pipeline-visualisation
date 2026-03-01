@@ -55,7 +55,8 @@ repos:
       - id: todo-check
         exclude: (?x)^(
           .pre-commit-config.yaml|
-          .gitignore
+          .gitignore|
+          CLAUDE.md
           )$
       - id: spell-check-commit-msgs
       - id: version-txt-auto-msg
