@@ -6,13 +6,47 @@ const BAR_H = 20;
 // TOP_PADDING must be >= 10 to keep AXIS_TICK_LINE_Y and AXIS_LABEL_Y within the SVG viewport
 const TOP_PADDING = 24; // px top padding (axis area)
 const MIN_BAR_LABEL_W = 30;
-const RIGHT_PADDING = 1; // px right padding
+const RIGHT_PADDING = 3; // px right padding
 const BOTTOM_PADDING = 8; // px bottom padding
+const LABEL_PADDING = 8; // px horizontal padding inside bar (4px each side)
+const CHAR_W = 6; // approximate px per char for monospace 10px
 const AXIS_TICK_LINE_Y = TOP_PADDING - 4;
 const AXIS_LABEL_Y = TOP_PADDING - 6;
 
+const ganttTooltip = document.getElementById("cy-tooltip") as HTMLDivElement;
+
 function svgEl<T extends SVGElement>(tag: string): T {
   return document.createElementNS("http://www.w3.org/2000/svg", tag) as T;
+}
+
+function truncateLabel(text: string, barW: number): string {
+  const maxChars = Math.floor((barW - LABEL_PADDING) / CHAR_W);
+  if (text.length <= maxChars) return text;
+  return text.slice(0, Math.max(1, maxChars - 1)) + "…";
+}
+
+function formatDuration(seconds: number, includeHours: boolean): string {
+  const s = Math.round(seconds);
+  const sec = String(s % 60).padStart(2, "0");
+  if (includeHours) {
+    const h = Math.floor(s / 3600);
+    const m = String(Math.floor((s % 3600) / 60)).padStart(2, "0");
+    return `${h}:${m}:${sec}`;
+  }
+  return `${Math.floor(s / 60)}:${sec}`;
+}
+
+const NICE_INTERVALS = [
+  1, 2, 5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600, 7200, 14400, 28800,
+  86400,
+];
+
+function niceTickInterval(rawMax: number): number {
+  const rough = rawMax / 5;
+  return (
+    NICE_INTERVALS.find((i) => i >= rough) ??
+    NICE_INTERVALS[NICE_INTERVALS.length - 1]
+  );
 }
 
 function buildAxis(
@@ -29,16 +63,37 @@ function buildAxis(
   axisLine.setAttribute("class", "gantt-axis-tick");
   svg.appendChild(axisLine);
 
-  for (const [val, anchor] of [
-    [0, "start"],
-    [rawMax, "end"],
-  ] as [number, string][]) {
+  const interval = niceTickInterval(rawMax);
+  const count = Math.floor(rawMax / interval);
+  const ticks: number[] = [];
+  for (let i = 0; i <= count; i++) ticks.push(i * interval);
+  if (ticks[ticks.length - 1] !== rawMax) {
+    if (rawMax - ticks[ticks.length - 1] < interval / 2) {
+      ticks[ticks.length - 1] = rawMax;
+    } else {
+      ticks.push(rawMax);
+    }
+  }
+
+  const includeHours = rawMax >= 3600;
+  for (const val of ticks) {
+    const x = val * pxPerUnit;
+
+    const tick = svgEl<SVGLineElement>("line");
+    tick.setAttribute("x1", String(x));
+    tick.setAttribute("x2", String(x));
+    tick.setAttribute("y1", String(AXIS_TICK_LINE_Y));
+    tick.setAttribute("y2", String(AXIS_TICK_LINE_Y + 5));
+    tick.setAttribute("class", "gantt-axis-tick");
+    svg.appendChild(tick);
+
+    const anchor = val === 0 ? "start" : val === rawMax ? "end" : "middle";
     const t = svgEl<SVGTextElement>("text");
-    t.setAttribute("x", String(val * pxPerUnit));
+    t.setAttribute("x", String(x));
     t.setAttribute("y", String(AXIS_LABEL_Y));
     t.setAttribute("text-anchor", anchor);
     t.setAttribute("class", "gantt-axis-label");
-    t.textContent = String(val);
+    t.textContent = formatDuration(val, includeHours);
     svg.appendChild(t);
   }
 }
@@ -68,6 +123,16 @@ function buildJobRow(
     const uses = job.uses;
     rect.addEventListener("click", () => onDrillDown(uses));
   }
+  rect.addEventListener("mousemove", (e) => {
+    const duration = job.end - job.start;
+    ganttTooltip.textContent = `${job.id} (${formatDuration(duration, duration >= 3600)})`;
+    ganttTooltip.style.display = "block";
+    ganttTooltip.style.left = `${e.clientX + 12}px`;
+    ganttTooltip.style.top = `${e.clientY - 8}px`;
+  });
+  rect.addEventListener("mouseout", () => {
+    ganttTooltip.style.display = "none";
+  });
   svg.appendChild(rect);
 
   if (barW > MIN_BAR_LABEL_W) {
@@ -76,7 +141,7 @@ function buildJobRow(
     barLabel.setAttribute("y", String(barY + BAR_H / 2));
     barLabel.setAttribute("dominant-baseline", "middle");
     barLabel.setAttribute("class", "gantt-label");
-    barLabel.textContent = job.id;
+    barLabel.textContent = truncateLabel(job.id, barW);
     svg.appendChild(barLabel);
   }
 }
