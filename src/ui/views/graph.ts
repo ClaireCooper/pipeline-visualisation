@@ -37,7 +37,7 @@ const GRAPH_STYLE: cytoscape.StylesheetStyle[] = [
     selector: "edge",
     style: {
       width: 1.5,
-      "line-color": "#ce9178",
+      "line-color": "#f9b062",
       "target-arrow-shape": "none",
       "curve-style": "bezier",
       "source-endpoint": "50% 0%",

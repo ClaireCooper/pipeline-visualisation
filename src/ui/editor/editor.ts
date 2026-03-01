@@ -1,9 +1,59 @@
 import { EditorView, basicSetup } from "codemirror";
 import { yaml } from "@codemirror/lang-yaml";
-import { oneDark } from "@codemirror/theme-one-dark";
+import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
+import { tags } from "@lezer/highlight";
 
 import { parse } from "../../core/parser";
 import type { ParsedPipeline } from "../../core/parser";
+
+const appTheme = EditorView.theme({
+  "&": {
+    background: "#252526",
+    color: "#d4d4d4",
+  },
+  ".cm-content": {
+    caretColor: "#d4d4d4",
+  },
+  ".cm-cursor": {
+    borderLeftColor: "#d4d4d4",
+  },
+  ".cm-gutters": {
+    background: "#252526",
+    color: "#858585",
+    border: "none",
+    borderRight: "1px solid #3c3c3c",
+  },
+  ".cm-activeLineGutter": {
+    background: "#2a2d2e",
+  },
+  ".cm-activeLine": {
+    background: "#2a2d2e",
+  },
+  ".cm-selectionBackground, ::selection": {
+    background: "#264f78 !important",
+  },
+  ".cm-focused .cm-selectionBackground": {
+    background: "#264f78",
+  },
+  ".cm-matchingBracket": {
+    background: "#3c3c3c",
+    outline: "1px solid #858585",
+  },
+});
+
+const appHighlightStyle = HighlightStyle.define([
+  { tag: tags.lineComment, color: "#858585", fontStyle: "italic" },
+  { tag: tags.keyword, color: "#858585" },
+  { tag: tags.string, color: "#f9ab55" },
+  { tag: tags.content, color: "#47cbbc" },
+  { tag: tags.propertyName, color: "#c586c0" },
+  { tag: tags.attributeName, color: "#c586c0" },
+  { tag: tags.typeName, color: "#c586c0" },
+  { tag: tags.separator, color: "#d4d4d4" },
+  { tag: tags.punctuation, color: "#d4d4d4" },
+  { tag: tags.squareBracket, color: "#d4d4d4" },
+  { tag: tags.brace, color: "#d4d4d4" },
+]);
 
 const errorMsg = document.getElementById("error-msg") as HTMLDivElement;
 const fileInput = document.getElementById("file-input") as HTMLInputElement;
@@ -24,7 +74,8 @@ export function initEditor(
     extensions: [
       basicSetup,
       yaml(),
-      oneDark,
+      appTheme,
+      syntaxHighlighting(appHighlightStyle),
       EditorView.updateListener.of((update) => {
         if (!update.docChanged) return;
         clearTimeout(debounceTimer);
