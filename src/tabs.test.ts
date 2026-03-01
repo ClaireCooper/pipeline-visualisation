@@ -59,6 +59,16 @@ describe("removeTab", () => {
     expect(next.tabs[0].yaml).toBe("");
     expect(next.tabs[0].id).not.toBe(onlyId);
   });
+
+  it("removes the first (active) tab and activates the right neighbour", () => {
+    const s0 = createTabState(); // tab1 is active
+    const tab2 = createTab("two");
+    const s1 = addTab(s0, tab2); // tab2 active
+    const s2 = setActive(s1, s0.tabs[0].id); // make tab1 active again
+    const s3 = removeTab(s2, s0.tabs[0].id); // remove first (active) tab
+    expect(s3.tabs).toHaveLength(1);
+    expect(s3.activeId).toBe(tab2.id);
+  });
 });
 
 describe("updateTab", () => {
