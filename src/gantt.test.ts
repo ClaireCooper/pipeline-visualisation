@@ -1,6 +1,7 @@
-import { describe, it, expect } from "vitest";
-import { assignRows } from "./gantt";
+import { describe, it, expect, beforeEach } from "vitest";
+import { assignRows, initGantt, renderGantt } from "./gantt";
 import type { ScheduledJob } from "./scheduler";
+import type { ParsedPipeline } from "./parser";
 
 describe("assignRows", () => {
   it("places non-overlapping jobs in the same row", () => {
@@ -58,5 +59,67 @@ describe("assignRows", () => {
     expect(rows.get("gap")).toBe(0);
     expect(rows.get("left")).not.toBe(0);
     expect(rows.get("right")).not.toBe(0);
+  });
+});
+
+describe("renderGantt pan/zoom", () => {
+  const pipeline: ParsedPipeline = {
+    workflows: {
+      build: { nodes: [{ id: "job-a", duration: 60 }], edges: [] },
+    },
+  };
+
+  const noDrillDown = (): void => undefined;
+
+  beforeEach(() => {
+    document.body.innerHTML = '<div id="gantt"></div>';
+    const el = document.getElementById("gantt");
+    if (!el) throw new Error("no #gantt element");
+    Object.defineProperty(el, "clientWidth", {
+      configurable: true,
+      value: 600,
+    });
+    initGantt();
+  });
+
+  it("wraps chart content in a <g> with initial translate(12,12) scale(1)", () => {
+    renderGantt("build", pipeline, noDrillDown);
+    const g = document.querySelector("#gantt svg g");
+    expect(g?.getAttribute("transform")).toBe("translate(12,12) scale(1)");
+  });
+
+  it("zooms in (scale > 1) when the wheel scrolls up", () => {
+    renderGantt("build", pipeline, noDrillDown);
+    const container = document.getElementById("gantt");
+    if (!container) throw new Error("no #gantt element");
+    container.dispatchEvent(
+      new WheelEvent("wheel", {
+        deltaY: -100,
+        clientX: 0,
+        clientY: 0,
+        bubbles: true,
+        cancelable: true,
+      }),
+    );
+    const transform =
+      document.querySelector("#gantt svg g")?.getAttribute("transform") ?? "";
+    const scaleStr = /scale\(([\d.]+)\)/.exec(transform)?.[1];
+    expect(scaleStr).not.toBeUndefined();
+    expect(Number(scaleStr)).toBeGreaterThan(1);
+  });
+
+  it("pans by the drag distance", () => {
+    renderGantt("build", pipeline, noDrillDown);
+    const container = document.getElementById("gantt");
+    if (!container) throw new Error("no #gantt element");
+    container.dispatchEvent(
+      new MouseEvent("mousedown", { clientX: 100, clientY: 50, bubbles: true }),
+    );
+    container.dispatchEvent(
+      new MouseEvent("mousemove", { clientX: 150, clientY: 80, bubbles: true }),
+    );
+    container.dispatchEvent(new MouseEvent("mouseup", { bubbles: true }));
+    const g = document.querySelector("#gantt svg g");
+    expect(g?.getAttribute("transform")).toBe("translate(62,42) scale(1)");
   });
 });

@@ -1,10 +1,14 @@
-const el = document.getElementById("cy-tooltip") as HTMLDivElement;
+function getTooltipEl(): HTMLDivElement | null {
+  return document.getElementById("cy-tooltip") as HTMLDivElement | null;
+}
 
 export function showTooltip(
   text: string,
   clientX: number,
   clientY: number,
 ): void {
+  const el = getTooltipEl();
+  if (!el) return;
   el.textContent = text;
   el.style.display = "block";
   const tipW = el.offsetWidth;
@@ -17,5 +21,5 @@ export function showTooltip(
 }
 
 export function hideTooltip(): void {
-  el.style.display = "none";
+  getTooltipEl()?.style.setProperty("display", "none");
 }
