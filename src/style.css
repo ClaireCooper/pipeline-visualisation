@@ -205,7 +205,13 @@ body {
 }
 
 #view-toggle-btn:hover {
+  background: #2a2d2e;
   border-color: #555;
+}
+
+#view-toggle-btn[aria-disabled="true"] {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 .toggle-thumb {

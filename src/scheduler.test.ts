@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { calculateScheduledJobs, criticalPathDuration } from "./scheduler";
+import {
+  calculateScheduledJobs,
+  criticalPathDuration,
+  hasMissingDurations,
+} from "./scheduler";
 import type { Workflow, ParsedPipeline } from "./parser";
 
 const emptyPipeline: ParsedPipeline = { workflows: {} };
@@ -87,6 +91,92 @@ describe("scheduledJobs", () => {
       end: 40,
       uses: "sub",
     });
+  });
+});
+
+describe("hasMissingDurations", () => {
+  it("returns false when a job has an explicit duration of 0", () => {
+    const workflow: Workflow = {
+      nodes: [{ id: "a", duration: 0 }],
+      edges: [],
+    };
+    expect(hasMissingDurations(workflow, emptyPipeline)).toBe(false);
+  });
+
+  it("returns false when all jobs have explicit durations", () => {
+    const workflow: Workflow = {
+      nodes: [
+        { id: "a", duration: 10 },
+        { id: "b", duration: 20 },
+      ],
+      edges: [],
+    };
+    expect(hasMissingDurations(workflow, emptyPipeline)).toBe(false);
+  });
+
+  it("returns true when a job has no duration and no uses", () => {
+    const workflow: Workflow = {
+      nodes: [{ id: "a", duration: 10 }, { id: "b" }],
+      edges: [],
+    };
+    expect(hasMissingDurations(workflow, emptyPipeline)).toBe(true);
+  });
+
+  it("returns false when a uses job references a workflow with durations", () => {
+    const pipeline: ParsedPipeline = {
+      workflows: {
+        sub: {
+          nodes: [{ id: "x", duration: 40 }],
+          edges: [],
+        },
+      },
+    };
+    const workflow: Workflow = {
+      nodes: [{ id: "deploy", uses: "sub" }],
+      edges: [],
+    };
+    expect(hasMissingDurations(workflow, pipeline)).toBe(false);
+  });
+
+  it("returns false for an empty workflow", () => {
+    const workflow: Workflow = { nodes: [], edges: [] };
+    expect(hasMissingDurations(workflow, emptyPipeline)).toBe(false);
+  });
+
+  it("returns true when a uses job transitively references a workflow with no durations", () => {
+    const pipeline: ParsedPipeline = {
+      workflows: {
+        mid: {
+          nodes: [{ id: "b", uses: "base" }],
+          edges: [],
+        },
+        base: {
+          nodes: [{ id: "c" }],
+          edges: [],
+        },
+      },
+    };
+    const workflow: Workflow = {
+      nodes: [{ id: "a", uses: "mid" }],
+      edges: [],
+    };
+    expect(hasMissingDurations(workflow, pipeline)).toBe(true);
+  });
+
+  it("returns true when a uses job references a workflow with no durations", () => {
+    const pipeline: ParsedPipeline = {
+      workflows: {
+        sub: {
+          nodes: [{ id: "x" }],
+          edges: [],
+        },
+      },
+    };
+    const workflow: Workflow = {
+      nodes: [{ id: "deploy", uses: "sub" }],
+      edges: [],
+    };
+    expect(hasMissingDurations(workflow, pipeline)).toBe(true);
   });
 });
 
