@@ -9,8 +9,8 @@ import {
   activeTab,
 } from "./tabs";
 import type { TabState } from "./tabs";
-import { createNavStack, push, pop, current } from "./navigation";
-import type { ParsedPipeline } from "./parser";
+import { createNavStack, push, pop, current } from "../../core/navigation";
+import type { ParsedPipeline } from "../../core/parser";
 
 interface EditorAPI {
   getContent: () => string;

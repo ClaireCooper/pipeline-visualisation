@@ -1,5 +1,5 @@
-import type { ParsedPipeline } from "./parser";
-import type { NavStack } from "./navigation";
+import type { ParsedPipeline } from "../../core/parser";
+import type { NavStack } from "../../core/navigation";
 
 export interface Tab {
   id: string;

@@ -1,6 +1,9 @@
-import type { ParsedPipeline } from "./parser";
-import { calculateScheduledJobs, type ScheduledJob } from "./scheduler";
-import { showTooltip, hideTooltip } from "./tooltip";
+import type { ParsedPipeline } from "../../core/parser";
+import {
+  calculateScheduledJobs,
+  type ScheduledJob,
+} from "../../core/scheduler";
+import { showTooltip, hideTooltip } from "../tooltip";
 
 const ROW_H = 32;
 const BAR_H = 20;

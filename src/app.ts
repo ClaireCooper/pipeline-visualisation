@@ -1,10 +1,10 @@
 import "./style.css";
 
-import { cy } from "./graph";
-import { initEditor } from "./editor";
-import { initViewController } from "./viewController";
-import { initTabController } from "./tabController";
-import { initEditorPane } from "./editorPane";
+import { cy } from "./ui/views/graph";
+import { initEditor } from "./ui/editor/editor";
+import { initViewController } from "./ui/views/viewController";
+import { initTabController } from "./ui/tabs/tabController";
+import { initEditorPane } from "./ui/editor/editorPane";
 
 // DOM elements
 const backBtn = document.getElementById("back-btn") as HTMLButtonElement;

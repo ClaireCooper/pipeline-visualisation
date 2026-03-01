@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildElements } from "./elements";
+import { buildElements } from "./graph-elements";
 import type { Workflow } from "./parser";
 
 describe("buildElements", () => {

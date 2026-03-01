@@ -2,8 +2,8 @@ import { EditorView, basicSetup } from "codemirror";
 import { yaml } from "@codemirror/lang-yaml";
 import { oneDark } from "@codemirror/theme-one-dark";
 
-import { parse } from "./parser";
-import type { ParsedPipeline } from "./parser";
+import { parse } from "../../core/parser";
+import type { ParsedPipeline } from "../../core/parser";
 
 const errorMsg = document.getElementById("error-msg") as HTMLDivElement;
 const fileInput = document.getElementById("file-input") as HTMLInputElement;

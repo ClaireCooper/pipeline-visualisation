@@ -26,7 +26,7 @@ This is a single-page TypeScript app built with Vite that visualises CI/CD pipel
 
 1. `editor.ts` — CodeMirror editor watches for YAML changes (300 ms debounce) and calls `parse()`
 2. `parser.ts` — parses YAML into `ParsedPipeline` (a map of workflow name → `Workflow` with `nodes[]` and `edges[]`); returns a discriminated union `ParseResult`; detects circular `uses` references
-3. `elements.ts` — converts a `Workflow` into Cytoscape element descriptors (`CyElement[]`)
+3. `graph-elements.ts` — converts a `Workflow` into Cytoscape element descriptors (`CyElement[]`)
 4. `graph.ts` — owns the `cytoscape` instance; `renderWorkflow()` clears and reloads elements using the dagre layout
 5. `scheduler.ts` — pure scheduling logic; `calculateScheduledJobs()` topologically sorts a workflow and assigns start/end times to each job; `criticalPathDuration()` returns the total span
 6. `gantt.ts` — renders a zoomable SVG Gantt chart from `ScheduledJob[]`; `assignRows()` packs bars vertically to minimise rows; bars show truncated labels and duration tooltips
