@@ -11,6 +11,8 @@ permissions:
 
 jobs:
   release:
+    permissions:
+      contents: write
     uses: George-Ogden/actions/.github/workflows/text-release.yaml@v4.0.1
   build:
     runs-on: ubuntu-latest
