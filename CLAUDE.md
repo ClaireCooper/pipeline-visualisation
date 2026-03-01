@@ -56,11 +56,11 @@ refactor-graph-layout
 
 ## Commit messages
 
-Imperative mood, sentence case, no trailing period. For scoped changes, append the filename:
+Imperative mood, sentence case, no trailing period:
 
 ```
 Add navigation stack
-Extract parseNeeds helper in parser.ts
+Extract parseNeeds helper
 Split app.ts into graph.ts and editor.ts
 ```
 
