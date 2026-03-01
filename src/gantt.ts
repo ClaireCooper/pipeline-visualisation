@@ -101,7 +101,6 @@ export function scheduledJobs(
 
 // --- Rendering ---
 
-const LABEL_W = 130; // px reserved for row labels on the left
 const CHART_W = 800; // natural px width of the bar area
 const ROW_H = 32; // px height per job row
 const BAR_H = 20; // px height of each bar
@@ -124,7 +123,7 @@ function buildSvg(
   const rawMax = jobs.reduce((m, j) => Math.max(m, j.end), 0);
   const maxEnd = rawMax > 0 ? rawMax : 1; // floor to 1 to avoid division by zero
   const pxPerUnit = CHART_W / maxEnd;
-  const svgW = LABEL_W + CHART_W + SIDE_P;
+  const svgW = CHART_W + SIDE_P;
   const svgH = TOP_P + jobs.length * ROW_H + BOT_P;
 
   const svg = svgEl<SVGSVGElement>("svg");
@@ -133,8 +132,8 @@ function buildSvg(
 
   // Axis line
   const axisLine = svgEl<SVGLineElement>("line");
-  axisLine.setAttribute("x1", String(LABEL_W));
-  axisLine.setAttribute("x2", String(LABEL_W + CHART_W));
+  axisLine.setAttribute("x1", "0");
+  axisLine.setAttribute("x2", String(CHART_W));
   axisLine.setAttribute("y1", String(AXIS_LINE_Y));
   axisLine.setAttribute("y2", String(AXIS_LINE_Y));
   axisLine.setAttribute("class", "gantt-axis-tick");
@@ -146,7 +145,7 @@ function buildSvg(
     [rawMax, "end"],
   ] as [number, string][]) {
     const t = svgEl<SVGTextElement>("text");
-    t.setAttribute("x", String(LABEL_W + val * pxPerUnit));
+    t.setAttribute("x", String(val * pxPerUnit));
     t.setAttribute("y", String(AXIS_LABEL_Y));
     t.setAttribute("text-anchor", anchor);
     t.setAttribute("class", "gantt-axis-label");
@@ -156,19 +155,9 @@ function buildSvg(
 
   for (const [i, job] of jobs.entries()) {
     const rowY = TOP_P + i * ROW_H;
-    const barX = LABEL_W + job.start * pxPerUnit;
+    const barX = job.start * pxPerUnit;
     const barW = Math.max(2, (job.end - job.start) * pxPerUnit);
     const barY = rowY + (ROW_H - BAR_H) / 2;
-
-    // Row label
-    const label = svgEl<SVGTextElement>("text");
-    label.setAttribute("x", String(LABEL_W - 8));
-    label.setAttribute("y", String(rowY + ROW_H / 2));
-    label.setAttribute("dominant-baseline", "middle");
-    label.setAttribute("text-anchor", "end");
-    label.setAttribute("class", "gantt-row-label");
-    label.textContent = job.id;
-    svg.appendChild(label);
 
     // Bar
     const rect = svgEl<SVGRectElement>("rect");
