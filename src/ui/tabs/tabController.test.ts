@@ -160,8 +160,22 @@ describe("initTabController", () => {
   });
 
   describe("onFileLoaded", () => {
-    it("creates a new tab named after the file (without extension)", () => {
+    it("replaces the active tab when it is empty", () => {
       const tc = initTabController(container, makeVc(), makeEditorFactory());
+      tc.onFileLoaded("ci.yaml", "jobs:\n  build: {}");
+      const { tabs, activeId } = tc.getState();
+      expect(tabs).toHaveLength(1);
+      const active = tabs.find((t) => t.id === activeId);
+      expect(active?.name).toBe("ci");
+      expect(active?.yaml).toBe("jobs:\n  build: {}");
+    });
+
+    it("creates a new tab when the active tab has content", () => {
+      const tc = initTabController(
+        container,
+        makeVc(),
+        makeEditorFactory("existing: content"),
+      );
       tc.onFileLoaded("ci.yaml", "jobs:\n  build: {}");
       const { tabs, activeId } = tc.getState();
       expect(tabs).toHaveLength(2);
