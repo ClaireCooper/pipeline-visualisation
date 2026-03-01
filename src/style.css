@@ -313,6 +313,7 @@ body {
   align-items: center;
   gap: 7px;
   padding: 4px 7px;
+  font-family: inherit;
   font-size: 12px;
   color: #858585;
   background: transparent;
@@ -338,6 +339,7 @@ body {
 }
 
 .tab-rename {
+  font-family: inherit;
   font-size: 12px;
   background: #1e1e1e;
   color: #d4d4d4;
