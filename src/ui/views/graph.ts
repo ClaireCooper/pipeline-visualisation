@@ -51,6 +51,12 @@ const GRAPH_STYLE: cytoscape.StylesheetStyle[] = [
       "target-endpoint": "-50% 0%",
     },
   },
+  {
+    selector: "edge.dependency-highlight",
+    style: {
+      "line-color": "#47cbbc",
+    },
+  },
 ];
 
 export const cy = cytoscape({
@@ -93,7 +99,7 @@ export function renderWorkflow(
   activeNodeId = selectedJobId;
   if (selectedJobId) {
     const selected = cy.$(`#${selectedJobId}`);
-    selected.predecessors("node").addClass("dependency-highlight");
+    selected.predecessors().addClass("dependency-highlight");
     selected.addClass("dependency-highlight");
   }
 }
@@ -109,7 +115,7 @@ export function initDependencyHighlight(
       activeNodeId = null;
       onSelect(null);
     } else {
-      node.predecessors("node").addClass("dependency-highlight");
+      node.predecessors().addClass("dependency-highlight");
       node.addClass("dependency-highlight");
       activeNodeId = nodeId;
       onSelect(nodeId);
