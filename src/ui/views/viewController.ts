@@ -1,4 +1,9 @@
-import { cy, renderWorkflow, initTooltip } from "./graph";
+import {
+  cy,
+  renderWorkflow,
+  initTooltip,
+  initDependencyHighlight,
+} from "./graph";
 import { renderGantt, initGantt, resetGanttZoom } from "./gantt";
 import { hasMissingDurations } from "../../core/scheduler";
 import { current } from "../../core/navigation";
@@ -18,6 +23,8 @@ interface ViewElements {
 export function initViewController(elements: ViewElements) {
   initGantt();
   let view: "graph" | "gantt" = "graph";
+  let selectedJobId: string | null = null;
+  let lastRenderedWorkflow: string | null = null;
 
   function updateToggleState(tabState: TabState): void {
     const tab = activeTab(tabState);
@@ -49,14 +56,21 @@ export function initViewController(elements: ViewElements) {
     if (!tab.pipeline || !tab.navStack) return;
     updateToggleState(tabState);
     const wf = current(tab.navStack);
+    const wfKey = `${tab.id}:${wf}`;
+    if (wfKey !== lastRenderedWorkflow) {
+      selectedJobId = null;
+      lastRenderedWorkflow = wfKey;
+    }
     if (view === "graph") {
       elements.ganttEl.style.display = "none";
       elements.cyEl.style.display = "";
-      renderWorkflow(wf, tab.pipeline);
+      renderWorkflow(wf, tab.pipeline, selectedJobId);
     } else {
       elements.cyEl.style.display = "none";
       elements.ganttEl.style.display = "block";
-      renderGantt(wf, tab.pipeline, onDrillDown);
+      renderGantt(wf, tab.pipeline, onDrillDown, selectedJobId, (id) => {
+        selectedJobId = id;
+      });
     }
   }
 
@@ -102,6 +116,9 @@ export function initViewController(elements: ViewElements) {
     onBack: () => void,
   ): void {
     initTooltip();
+    initDependencyHighlight((id) => {
+      selectedJobId = id;
+    });
     cy.on("tap", "node[uses]", (evt) => {
       onDrillDown(evt.target.data("uses") as string);
     });
