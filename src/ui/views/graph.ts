@@ -34,6 +34,13 @@ const GRAPH_STYLE: cytoscape.StylesheetStyle[] = [
     },
   },
   {
+    selector: "node.dependency-highlight",
+    style: {
+      "border-color": "#47cbbc",
+      "border-width": 2,
+    },
+  },
+  {
     selector: "edge",
     style: {
       width: 1.5,
@@ -64,6 +71,7 @@ export function initTooltip(): void {
 export function renderWorkflow(
   workflowName: string,
   pipeline: ParsedPipeline,
+  selectedJobId?: string | null,
 ): void {
   const workflow = pipeline.workflows[workflowName];
   if (!workflow) return;
@@ -79,4 +87,27 @@ export function renderWorkflow(
     nodeSep: 10,
   } as cytoscape.LayoutOptions).run();
   cy.fit(cy.elements(), 40);
+
+  if (selectedJobId) {
+    cy.$(`#${selectedJobId}`)
+      .predecessors("node")
+      .addClass("dependency-highlight");
+  }
+}
+
+export function initDependencyHighlight(
+  onSelect: (id: string | null) => void,
+): void {
+  cy.on("tap", "node", (evt) => {
+    const node = evt.target as cytoscape.NodeSingular;
+    cy.elements().removeClass("dependency-highlight");
+    node.predecessors("node").addClass("dependency-highlight");
+    onSelect(node.id());
+  });
+  cy.on("tap", (evt) => {
+    if (evt.target === cy) {
+      cy.elements().removeClass("dependency-highlight");
+      onSelect(null);
+    }
+  });
 }
