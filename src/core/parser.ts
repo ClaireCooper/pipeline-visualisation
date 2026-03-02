@@ -37,16 +37,11 @@ export function parse(yamlText: string): ParseResult {
     return { ok: false, error: `Invalid YAML: ${(e as Error).message}` };
   }
 
-  if (!doc || typeof doc !== "object") {
+  if (!doc || typeof doc !== "object" || Array.isArray(doc)) {
     return { ok: false, error: "Expected a YAML object at the top level" };
   }
 
-  const root = doc as Record<string, unknown>;
-  if (!root["workflows"] || typeof root["workflows"] !== "object") {
-    return { ok: false, error: 'Missing "workflows" key' };
-  }
-
-  const rawWorkflows = root["workflows"] as Record<string, unknown>;
+  const rawWorkflows = doc as Record<string, unknown>;
   const workflows: Record<string, Workflow> = {};
 
   for (const [workflowName, rawWorkflow] of Object.entries(rawWorkflows)) {

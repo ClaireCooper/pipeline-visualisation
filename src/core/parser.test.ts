@@ -4,13 +4,12 @@ import { parse } from "./parser";
 describe("parse", () => {
   it("parses a single workflow with no dependencies", () => {
     const yaml = `
-workflows:
-  build:
-    jobs:
-      compile:
-        duration: 30
-      lint:
-        duration: 10
+build:
+  jobs:
+    compile:
+      duration: 30
+    lint:
+      duration: 10
 `;
     const result = parse(yaml);
     expect(result.ok).toBe(true);
@@ -27,17 +26,16 @@ workflows:
 
   it("produces edges from needs declarations", () => {
     const yaml = `
-workflows:
-  pipeline:
-    jobs:
-      build:
-        duration: 60
-      test:
-        duration: 30
-      deploy:
-        needs:
-          - build
-          - test
+pipeline:
+  jobs:
+    build:
+      duration: 60
+    test:
+      duration: 30
+    deploy:
+      needs:
+        - build
+        - test
 `;
     const result = parse(yaml);
     expect(result.ok).toBe(true);
@@ -51,15 +49,14 @@ workflows:
 
   it("preserves the uses field on a node", () => {
     const yaml = `
-workflows:
-  main:
-    jobs:
-      deploy:
-        uses: deploy-workflow
-  deploy-workflow:
-    jobs:
-      upload:
-        duration: 60
+main:
+  jobs:
+    deploy:
+      uses: deploy-workflow
+deploy-workflow:
+  jobs:
+    upload:
+      duration: 60
 `;
     const result = parse(yaml);
     expect(result.ok).toBe(true);
@@ -73,11 +70,10 @@ workflows:
 
   it("returns an error when uses references a non-existent workflow", () => {
     const yaml = `
-workflows:
-  main:
-    jobs:
-      deploy:
-        uses: missing-workflow
+main:
+  jobs:
+    deploy:
+      uses: missing-workflow
 `;
     const result = parse(yaml);
     expect(result.ok).toBe(false);
@@ -97,24 +93,16 @@ workflows:
     expect(result.ok).toBe(false);
   });
 
-  it("returns an error when workflows key is missing", () => {
-    const result = parse("something: else");
-    expect(result.ok).toBe(false);
-    if (result.ok) return;
-    expect(result.error).toMatch(/workflows/);
-  });
-
   it("returns an error for circular uses references", () => {
     const yaml = `
-workflows:
-  a:
-    jobs:
-      build:
-        uses: b
-  b:
-    jobs:
-      deploy:
-        uses: a
+a:
+  jobs:
+    build:
+      uses: b
+b:
+  jobs:
+    deploy:
+      uses: a
 `;
     const result = parse(yaml);
     expect(result.ok).toBe(false);
