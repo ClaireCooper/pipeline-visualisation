@@ -27,13 +27,16 @@ const appTheme = EditorView.theme({
     background: "#2a2d2e",
   },
   ".cm-activeLine": {
-    background: "#2a2d2e",
+    background: "transparent",
   },
   ".cm-selectionBackground, ::selection": {
     background: "#264f78 !important",
   },
   ".cm-focused .cm-selectionBackground": {
     background: "#264f78",
+  },
+  ".cm-selectionMatch": {
+    background: "transparent",
   },
   ".cm-matchingBracket": {
     background: "#3c3c3c",
