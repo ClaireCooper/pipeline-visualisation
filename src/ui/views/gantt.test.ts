@@ -1,7 +1,46 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { assignRows, initGantt, renderGantt, resetGanttZoom } from "./gantt";
+import {
+  assignRows,
+  getAncestors,
+  initGantt,
+  renderGantt,
+  resetGanttZoom,
+} from "./gantt";
 import type { ScheduledJob } from "../../core/scheduler";
-import type { ParsedPipeline } from "../../core/parser";
+import type { Edge, ParsedPipeline } from "../../core/parser";
+
+describe("getAncestors", () => {
+  it("returns empty set for a node with no incoming edges", () => {
+    const edges: Edge[] = [{ source: "a", target: "b" }];
+    expect(getAncestors("a", edges)).toEqual(new Set());
+  });
+
+  it("returns direct parents", () => {
+    const edges: Edge[] = [
+      { source: "a", target: "c" },
+      { source: "b", target: "c" },
+    ];
+    expect(getAncestors("c", edges)).toEqual(new Set(["a", "b"]));
+  });
+
+  it("returns transitive ancestors", () => {
+    const edges: Edge[] = [
+      { source: "a", target: "b" },
+      { source: "b", target: "c" },
+    ];
+    expect(getAncestors("c", edges)).toEqual(new Set(["a", "b"]));
+  });
+
+  it("handles diamond dependencies without duplicates", () => {
+    const edges: Edge[] = [
+      { source: "a", target: "b" },
+      { source: "a", target: "c" },
+      { source: "b", target: "d" },
+      { source: "c", target: "d" },
+    ];
+    expect(getAncestors("d", edges)).toEqual(new Set(["a", "b", "c"]));
+  });
+});
 
 describe("assignRows", () => {
   it("places non-overlapping jobs in the same row", () => {
