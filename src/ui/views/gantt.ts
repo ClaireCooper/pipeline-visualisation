@@ -163,6 +163,7 @@ function buildJobRow(
     "class",
     job.uses ? "gantt-bar gantt-bar--uses" : "gantt-bar",
   );
+  rect.setAttribute("data-job-id", job.id);
   if (job.uses) {
     const uses = job.uses;
     rect.addEventListener("click", () => onDrillDown(uses));
@@ -222,6 +223,16 @@ let contentGroup: SVGGElement | null = null;
 let panX = 0;
 let panY = 0;
 let ganttScale = 1;
+let currentOnSelect: ((id: string | null) => void) | undefined;
+let mouseDownX = 0;
+let mouseDownY = 0;
+const DRAG_THRESHOLD = 5;
+
+function isDrag(e: MouseEvent): boolean {
+  const dx = e.clientX - mouseDownX;
+  const dy = e.clientY - mouseDownY;
+  return dx * dx + dy * dy > DRAG_THRESHOLD * DRAG_THRESHOLD;
+}
 
 function updateTransform(): void {
   if (!contentGroup) return;
@@ -249,6 +260,8 @@ export function initGantt(): void {
   let lastY = 0;
 
   container.addEventListener("mousedown", (e) => {
+    mouseDownX = e.clientX;
+    mouseDownY = e.clientY;
     dragging = true;
     lastX = e.clientX;
     lastY = e.clientY;
@@ -278,6 +291,16 @@ export function initGantt(): void {
     container.style.cursor = "";
   });
 
+  container.addEventListener("click", (e) => {
+    if (isDrag(e)) return;
+    if (!(e.target instanceof SVGRectElement)) {
+      container
+        .querySelectorAll<SVGRectElement>(".gantt-bar--ancestor")
+        .forEach((r) => r.classList.remove("gantt-bar--ancestor"));
+      currentOnSelect?.(null);
+    }
+  });
+
   container.addEventListener(
     "wheel",
     (e) => {
@@ -302,11 +325,15 @@ export function renderGantt(
   workflowName: string,
   pipeline: ParsedPipeline,
   onDrillDown: (uses: string) => void,
+  selectedJobId?: string | null,
+  onSelect?: (id: string | null) => void,
 ): void {
   if (!ganttContainer) throw new Error("renderGantt called before initGantt");
 
   const workflow = pipeline.workflows[workflowName];
   if (!workflow) return;
+
+  currentOnSelect = onSelect;
 
   const jobs = calculateScheduledJobs(workflow, pipeline);
   if (jobs.length === 0) return;
@@ -321,4 +348,39 @@ export function renderGantt(
   ganttScale = 1;
   updateTransform();
   ganttContainer.replaceChildren(svg);
+
+  const { edges } = workflow;
+
+  if (selectedJobId) {
+    const ancestors = getAncestors(selectedJobId, edges);
+    ganttContainer
+      .querySelectorAll<SVGRectElement>("[data-job-id]")
+      .forEach((r) => {
+        if (ancestors.has(r.getAttribute("data-job-id") ?? "")) {
+          r.classList.add("gantt-bar--ancestor");
+        }
+      });
+  }
+
+  ganttContainer
+    .querySelectorAll<SVGRectElement>("[data-job-id]")
+    .forEach((rect) => {
+      if (rect.classList.contains("gantt-bar--uses")) return;
+      rect.addEventListener("click", (e) => {
+        if (isDrag(e)) return;
+        const jobId = rect.getAttribute("data-job-id") ?? "";
+        const ancestors = getAncestors(jobId, edges);
+        ganttContainer
+          ?.querySelectorAll<SVGRectElement>(".gantt-bar--ancestor")
+          .forEach((r) => r.classList.remove("gantt-bar--ancestor"));
+        ganttContainer
+          ?.querySelectorAll<SVGRectElement>("[data-job-id]")
+          .forEach((r) => {
+            if (ancestors.has(r.getAttribute("data-job-id") ?? "")) {
+              r.classList.add("gantt-bar--ancestor");
+            }
+          });
+        onSelect?.(jobId);
+      });
+    });
 }

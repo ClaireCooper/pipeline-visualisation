@@ -305,6 +305,11 @@ body {
   fill: #37373d;
 }
 
+.gantt-bar--ancestor {
+  stroke: #47cbbc;
+  stroke-width: 2;
+}
+
 .gantt-label {
   font-size: 10px;
   fill: #c586c0;
