@@ -21,7 +21,6 @@ const appTheme = EditorView.theme({
     background: "#252526",
     color: "#858585",
     border: "none",
-    borderRight: "1px solid #3c3c3c",
   },
   ".cm-activeLineGutter": {
     background: "#2a2d2e",
