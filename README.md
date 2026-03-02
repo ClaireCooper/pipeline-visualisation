@@ -7,24 +7,23 @@ View and edit your pipeline as a dependency graph and Gantt chart.
 Pipelines are described as a set of named workflows, each containing jobs. Jobs can declare dependencies on other jobs in the same workflow via `needs`, and can reference another workflow via `uses`.
 
 ```yaml
-workflows:
-  build-test-deploy:
-    jobs:
-      build:
-        duration: 600
-      test:
-        duration: 100
-      deploy:
-        uses: deploy
-        needs:
-          - build
-          - test
-  deploy:
-    jobs:
-      deploy-a:
-        duration: 100
-      deploy-b:
-        duration: 500
+build-test-deploy:
+  jobs:
+    build:
+      duration: 600
+    test:
+      duration: 100
+    deploy:
+      uses: deploy
+      needs:
+        - build
+        - test
+deploy:
+  jobs:
+    deploy-a:
+      duration: 100
+    deploy-b:
+      duration: 500
 ```
 
 | Field       | Required | Description                                    |
