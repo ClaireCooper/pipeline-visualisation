@@ -1,4 +1,4 @@
-import type { ParsedPipeline } from "../../core/parser";
+import type { ParsedPipeline, Edge } from "../../core/parser";
 import {
   calculateScheduledJobs,
   type ScheduledJob,
@@ -16,6 +16,22 @@ const CHAR_W = 6; // approximate px per char for monospace 10px
 const AXIS_TICK_LINE_Y = TOP_PADDING - 4;
 const AXIS_LABEL_Y = TOP_PADDING - 6;
 const CONTENT_PADDING = 12; // px padding around chart content
+
+export function getAncestors(id: string, edges: Edge[]): Set<string> {
+  const ancestors = new Set<string>();
+  const queue = [id];
+  while (queue.length > 0) {
+    const current = queue.pop();
+    if (current === undefined) break;
+    for (const edge of edges) {
+      if (edge.target === current && !ancestors.has(edge.source)) {
+        ancestors.add(edge.source);
+        queue.push(edge.source);
+      }
+    }
+  }
+  return ancestors;
+}
 
 export function assignRows(jobs: ScheduledJob[]): Map<string, number> {
   const sorted = [...jobs].sort((a, b) => b.end - b.start - (a.end - a.start));
