@@ -92,9 +92,9 @@ export function renderWorkflow(
 
   activeNodeId = selectedJobId;
   if (selectedJobId) {
-    cy.$(`#${selectedJobId}`)
-      .predecessors("node")
-      .addClass("dependency-highlight");
+    const selected = cy.$(`#${selectedJobId}`);
+    selected.predecessors("node").addClass("dependency-highlight");
+    selected.addClass("dependency-highlight");
   }
 }
 
@@ -110,6 +110,7 @@ export function initDependencyHighlight(
       onSelect(null);
     } else {
       node.predecessors("node").addClass("dependency-highlight");
+      node.addClass("dependency-highlight");
       activeNodeId = nodeId;
       onSelect(nodeId);
     }

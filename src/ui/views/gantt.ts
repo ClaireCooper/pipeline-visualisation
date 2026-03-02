@@ -359,7 +359,8 @@ export function renderGantt(
     ganttContainer
       .querySelectorAll<SVGRectElement>("[data-job-id]")
       .forEach((r) => {
-        if (ancestors.has(r.getAttribute("data-job-id") ?? "")) {
+        const id = r.getAttribute("data-job-id") ?? "";
+        if (ancestors.has(id) || id === selectedJobId) {
           r.classList.add("gantt-bar--ancestor");
         }
       });
@@ -383,7 +384,8 @@ export function renderGantt(
           ganttContainer
             ?.querySelectorAll<SVGRectElement>("[data-job-id]")
             .forEach((r) => {
-              if (ancestors.has(r.getAttribute("data-job-id") ?? "")) {
+              const id = r.getAttribute("data-job-id") ?? "";
+              if (ancestors.has(id) || id === jobId) {
                 r.classList.add("gantt-bar--ancestor");
               }
             });
