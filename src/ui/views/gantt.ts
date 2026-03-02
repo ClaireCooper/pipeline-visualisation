@@ -224,6 +224,7 @@ let panX = 0;
 let panY = 0;
 let ganttScale = 1;
 let currentOnSelect: ((id: string | null) => void) | undefined;
+let currentSelectedJobId: string | null = null;
 let mouseDownX = 0;
 let mouseDownY = 0;
 const DRAG_THRESHOLD = 5;
@@ -297,6 +298,7 @@ export function initGantt(): void {
       container
         .querySelectorAll<SVGRectElement>(".gantt-bar--ancestor")
         .forEach((r) => r.classList.remove("gantt-bar--ancestor"));
+      currentSelectedJobId = null;
       currentOnSelect?.(null);
     }
   });
@@ -334,6 +336,7 @@ export function renderGantt(
   if (!workflow) return;
 
   currentOnSelect = onSelect;
+  currentSelectedJobId = selectedJobId ?? null;
 
   const jobs = calculateScheduledJobs(workflow, pipeline);
   if (jobs.length === 0) return;
@@ -369,18 +372,24 @@ export function renderGantt(
       rect.addEventListener("click", (e) => {
         if (isDrag(e)) return;
         const jobId = rect.getAttribute("data-job-id") ?? "";
-        const ancestors = getAncestors(jobId, edges);
         ganttContainer
           ?.querySelectorAll<SVGRectElement>(".gantt-bar--ancestor")
           .forEach((r) => r.classList.remove("gantt-bar--ancestor"));
-        ganttContainer
-          ?.querySelectorAll<SVGRectElement>("[data-job-id]")
-          .forEach((r) => {
-            if (ancestors.has(r.getAttribute("data-job-id") ?? "")) {
-              r.classList.add("gantt-bar--ancestor");
-            }
-          });
-        onSelect?.(jobId);
+        if (jobId === currentSelectedJobId) {
+          currentSelectedJobId = null;
+          currentOnSelect?.(null);
+        } else {
+          const ancestors = getAncestors(jobId, edges);
+          ganttContainer
+            ?.querySelectorAll<SVGRectElement>("[data-job-id]")
+            .forEach((r) => {
+              if (ancestors.has(r.getAttribute("data-job-id") ?? "")) {
+                r.classList.add("gantt-bar--ancestor");
+              }
+            });
+          currentSelectedJobId = jobId;
+          currentOnSelect?.(jobId);
+        }
       });
     });
 }

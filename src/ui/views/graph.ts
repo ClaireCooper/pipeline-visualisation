@@ -58,6 +58,8 @@ export const cy = cytoscape({
   style: GRAPH_STYLE,
 });
 
+let activeNodeId: string | null = null;
+
 export function initTooltip(): void {
   cy.on("mousemove", "node", (evt) => {
     const e = evt.originalEvent as MouseEvent;
@@ -71,7 +73,7 @@ export function initTooltip(): void {
 export function renderWorkflow(
   workflowName: string,
   pipeline: ParsedPipeline,
-  selectedJobId?: string | null,
+  selectedJobId: string | null = null,
 ): void {
   const workflow = pipeline.workflows[workflowName];
   if (!workflow) return;
@@ -88,6 +90,7 @@ export function renderWorkflow(
   } as cytoscape.LayoutOptions).run();
   cy.fit(cy.elements(), 40);
 
+  activeNodeId = selectedJobId;
   if (selectedJobId) {
     cy.$(`#${selectedJobId}`)
       .predecessors("node")
@@ -100,13 +103,21 @@ export function initDependencyHighlight(
 ): void {
   cy.on("tap", "node", (evt) => {
     const node = evt.target as cytoscape.NodeSingular;
+    const nodeId = node.id();
     cy.elements().removeClass("dependency-highlight");
-    node.predecessors("node").addClass("dependency-highlight");
-    onSelect(node.id());
+    if (nodeId === activeNodeId) {
+      activeNodeId = null;
+      onSelect(null);
+    } else {
+      node.predecessors("node").addClass("dependency-highlight");
+      activeNodeId = nodeId;
+      onSelect(nodeId);
+    }
   });
   cy.on("tap", (evt) => {
     if (evt.target === cy) {
       cy.elements().removeClass("dependency-highlight");
+      activeNodeId = null;
       onSelect(null);
     }
   });
