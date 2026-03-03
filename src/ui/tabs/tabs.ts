@@ -14,24 +14,18 @@ export interface TabState {
   activeId: number;
 }
 
-let _nextId = 1;
-
-export function createTab(name: string, yaml = ""): Tab {
-  return { id: _nextId++, name, yaml, pipeline: null, navStack: null };
-}
-
-export function createTabState(): TabState {
-  const tab = createTab("pipeline-1");
-  return { tabs: [tab], activeId: tab.id };
+export function createTab(id: number, name: string, yaml = ""): Tab {
+  return { id, name, yaml, pipeline: null, navStack: null };
 }
 
 export function addTab(state: TabState, tab: Tab): TabState {
   return { tabs: [...state.tabs, tab], activeId: tab.id };
 }
 
-export function removeTab(state: TabState, id: number): TabState {
+export function removeTab(state: TabState, id: number): TabState | null {
   const remaining = state.tabs.filter((t) => t.id !== id);
-  if (remaining.length === 0) return createTabState();
+  if (remaining.length === state.tabs.length) return state; // id not found
+  if (remaining.length === 0) return null;
   let activeId = state.activeId;
   if (activeId === id) {
     const idx = state.tabs.findIndex((t) => t.id === id);

@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest";
 import type { TabState } from "./tabs";
 import {
-  createTabState,
   createTab,
   addTab,
   removeTab,
@@ -10,72 +9,73 @@ import {
   activeTab,
 } from "./tabs";
 
-describe("createTabState", () => {
-  it("starts with one blank tab as the active tab", () => {
-    const state = createTabState();
-    expect(state.tabs).toHaveLength(1);
-    expect(state.tabs[0].yaml).toBe("");
-    expect(state.tabs[0].pipeline).toBeNull();
-    expect(state.activeId).toBe(state.tabs[0].id);
-  });
-});
+function tab(id: number, name = "x"): ReturnType<typeof createTab> {
+  return createTab(id, name);
+}
+
+function state(...tabs: ReturnType<typeof createTab>[]): TabState {
+  return { tabs, activeId: tabs[0].id };
+}
 
 describe("addTab", () => {
   it("appends the tab and makes it active", () => {
-    const state = createTabState();
-    const tab = createTab("new");
-    const next = addTab(state, tab);
-    expect(next.tabs).toHaveLength(2);
-    expect(next.activeId).toBe(tab.id);
+    const s0 = state(tab(1, "first"));
+    const t2 = tab(2, "second");
+    const s1 = addTab(s0, t2);
+    expect(s1.tabs).toHaveLength(2);
+    expect(s1.activeId).toBe(2);
   });
 });
 
 describe("removeTab", () => {
   it("removes a non-active tab without changing activeId", () => {
-    const s0 = createTabState();
-    const tab2 = createTab("two");
-    const s1 = addTab(s0, tab2); // active = tab2
-    const firstId = s0.tabs[0].id;
-    const s2 = removeTab(s1, firstId);
-    expect(s2.tabs).toHaveLength(1);
-    expect(s2.tabs[0].id).toBe(tab2.id);
-    expect(s2.activeId).toBe(tab2.id);
+    const t1 = tab(1);
+    const t2 = tab(2);
+    const s0 = { tabs: [t1, t2], activeId: 2 };
+    const s1 = removeTab(s0, 1);
+    expect(s1?.tabs).toHaveLength(1);
+    expect(s1?.tabs[0].id).toBe(2);
+    expect(s1?.activeId).toBe(2);
   });
 
   it("removes the active tab and activates the nearest neighbour", () => {
-    const s0 = createTabState();
-    const tab2 = createTab("two");
-    const s1 = addTab(s0, tab2); // active = tab2
-    const s2 = removeTab(s1, tab2.id);
-    expect(s2.tabs).toHaveLength(1);
-    expect(s2.activeId).toBe(s0.tabs[0].id);
+    const t1 = tab(1);
+    const t2 = tab(2);
+    const s0 = { tabs: [t1, t2], activeId: 2 };
+    const s1 = removeTab(s0, 2);
+    expect(s1?.tabs).toHaveLength(1);
+    expect(s1?.activeId).toBe(1);
   });
 
-  it("replaces the last tab with a fresh blank state", () => {
-    const state = createTabState();
-    const onlyId = state.tabs[0].id;
-    const next = removeTab(state, onlyId);
-    expect(next.tabs).toHaveLength(1);
-    expect(next.tabs[0].yaml).toBe("");
-    expect(next.tabs[0].id).not.toBe(onlyId);
+  it("returns null when removing the last tab", () => {
+    const s0 = state(tab(1));
+    expect(removeTab(s0, 1)).toBeNull();
+  });
+
+  it("removes the active middle tab and activates the left neighbour", () => {
+    const t1 = tab(1);
+    const t2 = tab(2);
+    const t3 = tab(3);
+    const s0 = { tabs: [t1, t2, t3], activeId: 2 };
+    const s1 = removeTab(s0, 2);
+    expect(s1?.tabs).toHaveLength(2);
+    expect(s1?.activeId).toBe(1);
   });
 
   it("removes the first (active) tab and activates the right neighbour", () => {
-    const s0 = createTabState(); // tab1 is active
-    const tab2 = createTab("two");
-    const s1 = addTab(s0, tab2); // tab2 active
-    const s2 = setActive(s1, s0.tabs[0].id); // make tab1 active again
-    const s3 = removeTab(s2, s0.tabs[0].id); // remove first (active) tab
-    expect(s3.tabs).toHaveLength(1);
-    expect(s3.activeId).toBe(tab2.id);
+    const t1 = tab(1);
+    const t2 = tab(2);
+    const s0 = { tabs: [t1, t2], activeId: 1 };
+    const s1 = removeTab(s0, 1);
+    expect(s1?.tabs).toHaveLength(1);
+    expect(s1?.activeId).toBe(2);
   });
 });
 
 describe("updateTab", () => {
   it("patches a tab by id, leaving others unchanged", () => {
-    const s0 = createTabState();
-    const id = s0.activeId;
-    const s1 = updateTab(s0, id, { name: "renamed" });
+    const s0 = state(tab(1));
+    const s1 = updateTab(s0, 1, { name: "renamed" });
     expect(activeTab(s1).name).toBe("renamed");
     expect(activeTab(s1).yaml).toBe("");
   });
@@ -83,17 +83,17 @@ describe("updateTab", () => {
 
 describe("setActive", () => {
   it("changes the active id", () => {
-    const s0 = createTabState();
-    const tab2 = createTab("two");
-    const s1 = addTab(s0, tab2);
-    const s2 = setActive(s1, s0.tabs[0].id);
-    expect(s2.activeId).toBe(s0.tabs[0].id);
+    const t1 = tab(1);
+    const t2 = tab(2);
+    const s0 = { tabs: [t1, t2], activeId: 2 };
+    const s1 = setActive(s0, 1);
+    expect(s1.activeId).toBe(1);
   });
 });
 
 describe("activeTab", () => {
   it("throws when activeId does not match any tab", () => {
-    const state = { tabs: [], activeId: "ghost" } as unknown as TabState;
-    expect(() => activeTab(state)).toThrow("No tab with id ghost");
+    const s = { tabs: [], activeId: 99 } as unknown as TabState;
+    expect(() => activeTab(s)).toThrow("No tab with id 99");
   });
 });
