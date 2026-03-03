@@ -45,6 +45,7 @@ describe("initTabController", () => {
 
   beforeEach(() => {
     container = makeContainer();
+    localStorage.clear();
   });
 
   it("starts with a single blank tab", () => {
@@ -255,6 +256,101 @@ describe("initTabController", () => {
       vc.render.mockClear();
       tc.back();
       expect(vc.render).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("persistence", () => {
+    it("saves tab name and yaml to localStorage after onParsed", () => {
+      const editor = makeEditor("jobs:\n  build: {}");
+      const tc = initTabController(container, makeVc(), () => editor);
+      tc.renameTab(tc.getState().activeId, "my-ci");
+      tc.onParsed(PIPELINE);
+
+      const raw = localStorage.getItem("pipeline-visualisation:tabs");
+      expect(raw).not.toBeNull();
+      const saved = JSON.parse(raw ?? "");
+      expect(saved.tabs[0].name).toBe("my-ci");
+      expect(saved.tabs[0].yaml).toBe("jobs:\n  build: {}");
+    });
+
+    it("restores tabs from localStorage on init", () => {
+      const editor = makeEditor("jobs:\n  build: {}");
+      const tc1 = initTabController(container, makeVc(), () => editor);
+      tc1.renameTab(tc1.getState().activeId, "restored-ci");
+      tc1.onParsed(PIPELINE);
+
+      const tc2 = initTabController(
+        makeContainer(),
+        makeVc(),
+        makeEditorFactory(),
+      );
+      const { tabs } = tc2.getState();
+      expect(tabs[0].name).toBe("restored-ci");
+      expect(tabs[0].yaml).toBe("jobs:\n  build: {}");
+    });
+
+    it("populates the editor with restored yaml on init", () => {
+      const editor = makeEditor("jobs:\n  build: {}");
+      const tc1 = initTabController(container, makeVc(), () => editor);
+      tc1.onParsed(PIPELINE);
+
+      const restoredEditor = makeEditor();
+      initTabController(makeContainer(), makeVc(), () => restoredEditor);
+      expect(restoredEditor.getContent()).toBe("jobs:\n  build: {}");
+    });
+
+    it("restores the active tab id", () => {
+      const editor = makeEditor("yaml: here");
+      const tc1 = initTabController(container, makeVc(), () => editor);
+      tc1.addNewTab();
+      tc1.onParsed(PIPELINE);
+      const savedActiveId = tc1.getState().activeId;
+
+      const tc2 = initTabController(
+        makeContainer(),
+        makeVc(),
+        makeEditorFactory(),
+      );
+      expect(tc2.getState().activeId).toBe(savedActiveId);
+    });
+
+    it("new tabs after restore do not collide with restored ids", () => {
+      const editor = makeEditor("yaml: here");
+      const tc1 = initTabController(container, makeVc(), () => editor);
+      tc1.onParsed(PIPELINE);
+
+      const tc2 = initTabController(
+        makeContainer(),
+        makeVc(),
+        makeEditorFactory(),
+      );
+      const restoredIds = new Set(tc2.getState().tabs.map((t) => t.id));
+      tc2.addNewTab();
+      const newId = tc2.getState().activeId;
+      expect(restoredIds.has(newId)).toBe(false);
+    });
+
+    it("falls back to a fresh tab when localStorage is empty", () => {
+      const tc = initTabController(container, makeVc(), makeEditorFactory());
+      const { tabs } = tc.getState();
+      expect(tabs).toHaveLength(1);
+      expect(tabs[0].yaml).toBe("");
+    });
+
+    it("persists fresh state after closing the last tab", () => {
+      const editor = makeEditor("jobs:\n  build: {}");
+      const tc = initTabController(container, makeVc(), () => editor);
+      tc.onParsed(PIPELINE);
+      const onlyId = tc.getState().activeId;
+
+      tc.closeTab(onlyId);
+
+      const raw = localStorage.getItem("pipeline-visualisation:tabs");
+      expect(raw).not.toBeNull();
+      const saved = JSON.parse(raw ?? "");
+      expect(saved.tabs).toHaveLength(1);
+      expect(saved.tabs[0].id).not.toBe(onlyId);
+      expect(saved.tabs[0].yaml).toBe("");
     });
   });
 });

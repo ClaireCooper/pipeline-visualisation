@@ -1,6 +1,5 @@
 import { renderTabBar } from "./tabBar";
 import {
-  createTabState,
   createTab,
   addTab,
   removeTab,
@@ -11,6 +10,7 @@ import {
 import type { TabState } from "./tabs";
 import { createNavStack, push, pop, current } from "../../core/navigation";
 import type { ParsedPipeline } from "../../core/parser";
+import { saveState, loadState, restoreTabState } from "../../core/persistence";
 
 interface EditorAPI {
   getContent: () => string;
@@ -34,8 +34,25 @@ export function initTabController(
   vc: ViewAPI,
   createEditor: EditorFactory,
 ) {
-  let state = createTabState();
+  let _nextId = 1;
+  function nextId(): number {
+    return _nextId++;
+  }
+  function freshState(): TabState {
+    const tab = createTab(nextId(), "pipeline-1");
+    return { tabs: [tab], activeId: tab.id };
+  }
+
+  const persisted = loadState();
+  let state = persisted ? restoreTabState(persisted) : freshState();
+  if (persisted && state.tabs.length > 0)
+    _nextId = Math.max(...state.tabs.map((t) => t.id)) + 1;
+
   const editor = createEditor(onParsed, onFileLoaded);
+
+  function persist(): void {
+    saveState(state);
+  }
 
   function rerenderTabs(): void {
     renderTabBar(tabBarEl, state, {
@@ -66,13 +83,15 @@ export function initTabController(
   function switchTab(id: number): void {
     saveCurrentTab();
     state = setActive(state, id);
+    persist();
     rerenderTabs();
     loadActiveTab();
   }
 
   function closeTab(id: number): void {
     saveCurrentTab();
-    state = removeTab(state, id);
+    state = removeTab(state, id) ?? freshState();
+    persist();
     rerenderTabs();
     loadActiveTab();
   }
@@ -80,14 +99,16 @@ export function initTabController(
   function addNewTab(): void {
     saveCurrentTab();
     const n = state.tabs.length + 1;
-    const tab = createTab(`pipeline-${n}`);
+    const tab = createTab(nextId(), `pipeline-${n}`);
     state = addTab(state, tab);
+    persist();
     rerenderTabs();
     loadActiveTab();
   }
 
   function renameTab(id: number, name: string): void {
     state = updateTab(state, id, { name });
+    persist();
     setTimeout(rerenderTabs, 0);
   }
 
@@ -115,7 +136,9 @@ export function initTabController(
     state = updateTab(state, state.activeId, {
       pipeline: newPipeline,
       navStack,
+      yaml: editor.getContent(),
     });
+    persist();
     vc.render(state, drillDown);
     vc.updateBreadcrumb(state);
     editor.clearError();
@@ -128,9 +151,10 @@ export function initTabController(
     if (active.yaml === "") {
       state = updateTab(state, state.activeId, { name, yaml: text });
     } else {
-      const tab = createTab(name, text);
+      const tab = createTab(nextId(), name, text);
       state = addTab(state, tab);
     }
+    persist();
     rerenderTabs();
     loadActiveTab();
   }
@@ -167,6 +191,7 @@ export function initTabController(
     ?.addEventListener("click", downloadActive);
 
   rerenderTabs();
+  if (persisted) loadActiveTab();
 
   return {
     getState,
@@ -175,7 +200,6 @@ export function initTabController(
     drillDown,
     back,
     downloadActive,
-    // Exposed for tab bar callbacks (also useful for testing)
     switchTab,
     closeTab,
     addNewTab,
