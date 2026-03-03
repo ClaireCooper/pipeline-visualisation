@@ -2,7 +2,7 @@ import type { ParsedPipeline } from "../../core/parser";
 import type { NavStack } from "../../core/navigation";
 
 export interface Tab {
-  id: string;
+  id: number;
   name: string;
   yaml: string;
   pipeline: ParsedPipeline | null;
@@ -11,13 +11,13 @@ export interface Tab {
 
 export interface TabState {
   tabs: Tab[];
-  activeId: string;
+  activeId: number;
 }
 
 let _nextId = 1;
 
 export function createTab(name: string, yaml = ""): Tab {
-  return { id: `tab-${_nextId++}`, name, yaml, pipeline: null, navStack: null };
+  return { id: _nextId++, name, yaml, pipeline: null, navStack: null };
 }
 
 export function createTabState(): TabState {
@@ -29,7 +29,7 @@ export function addTab(state: TabState, tab: Tab): TabState {
   return { tabs: [...state.tabs, tab], activeId: tab.id };
 }
 
-export function removeTab(state: TabState, id: string): TabState {
+export function removeTab(state: TabState, id: number): TabState {
   const remaining = state.tabs.filter((t) => t.id !== id);
   if (remaining.length === 0) return createTabState();
   let activeId = state.activeId;
@@ -40,13 +40,13 @@ export function removeTab(state: TabState, id: string): TabState {
   return { tabs: remaining, activeId };
 }
 
-export function setActive(state: TabState, id: string): TabState {
+export function setActive(state: TabState, id: number): TabState {
   return { ...state, activeId: id };
 }
 
 export function updateTab(
   state: TabState,
-  id: string,
+  id: number,
   patch: Partial<Omit<Tab, "id">>,
 ): TabState {
   return {

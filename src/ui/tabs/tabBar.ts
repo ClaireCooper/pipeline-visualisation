@@ -1,10 +1,10 @@
 import type { TabState } from "./tabs";
 
 export interface TabBarCallbacks {
-  onSwitch: (id: string) => void;
-  onClose: (id: string) => void;
+  onSwitch: (id: number) => void;
+  onClose: (id: number) => void;
   onAdd: () => void;
-  onRename: (id: string, name: string) => void;
+  onRename: (id: number, name: string) => void;
   onRerender: () => void;
 }
 
@@ -54,9 +54,9 @@ export function renderTabBar(
 }
 
 function startRename(
-  id: string,
+  id: number,
   label: HTMLSpanElement,
-  onRename: (id: string, name: string) => void,
+  onRename: (id: number, name: string) => void,
   onRerender: () => void,
 ): void {
   const input = document.createElement("input");
