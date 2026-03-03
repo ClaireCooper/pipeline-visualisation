@@ -63,14 +63,14 @@ export function initTabController(
     editor.clearError();
   }
 
-  function switchTab(id: string): void {
+  function switchTab(id: number): void {
     saveCurrentTab();
     state = setActive(state, id);
     rerenderTabs();
     loadActiveTab();
   }
 
-  function closeTab(id: string): void {
+  function closeTab(id: number): void {
     saveCurrentTab();
     state = removeTab(state, id);
     rerenderTabs();
@@ -86,7 +86,7 @@ export function initTabController(
     loadActiveTab();
   }
 
-  function renameTab(id: string, name: string): void {
+  function renameTab(id: number, name: string): void {
     state = updateTab(state, id, { name });
     setTimeout(rerenderTabs, 0);
   }
