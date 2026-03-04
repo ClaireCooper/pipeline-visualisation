@@ -4,6 +4,7 @@ import { initEditor } from "./ui/editor/editor";
 import { initViewController } from "./ui/views/viewController";
 import { initTabController } from "./ui/tabs/tabController";
 import { initEditorPane } from "./ui/editor/editorPane";
+import { initHelpModal } from "./ui/help/helpModal";
 
 // DOM elements
 const backBtn = document.getElementById("back-btn") as HTMLButtonElement;
@@ -22,6 +23,8 @@ const tabBarEl = document.getElementById("tab-bar") as HTMLDivElement;
 const zoomResetBtn = document.getElementById(
   "zoom-reset-btn",
 ) as HTMLButtonElement;
+const helpBtn = document.getElementById("help-btn") as HTMLButtonElement;
+const helpModal = document.getElementById("help-modal") as HTMLElement;
 
 const vc = initViewController({
   cyEl,
@@ -37,3 +40,5 @@ const tc = initTabController(tabBarEl, vc, initEditor);
 vc.bindEvents(tc.getState, tc.drillDown, tc.back);
 
 initEditorPane(editorPane, editorToggle, toggleBtn);
+
+initHelpModal(helpBtn, helpModal);
