@@ -166,7 +166,7 @@ function buildJobRow(
   rect.setAttribute("data-job-id", job.id);
   if (job.uses) {
     const uses = job.uses;
-    rect.addEventListener("click", () => onDrillDown(uses));
+    rect.addEventListener("dblclick", () => onDrillDown(uses));
   }
   rect.addEventListener("mousemove", (e) => {
     const duration = job.end - job.start;
@@ -369,7 +369,6 @@ export function renderGantt(
   ganttContainer
     .querySelectorAll<SVGRectElement>("[data-job-id]")
     .forEach((rect) => {
-      if (rect.classList.contains("gantt-bar--uses")) return;
       rect.addEventListener("click", (e) => {
         if (isDrag(e)) return;
         const jobId = rect.getAttribute("data-job-id") ?? "";

@@ -119,7 +119,7 @@ export function initViewController(elements: ViewElements) {
     initDependencyHighlight((id) => {
       selectedJobId = id;
     });
-    cy.on("tap", "node[uses]", (evt) => {
+    cy.on("dblclick", "node[uses]", (evt) => {
       onDrillDown(evt.target.data("uses") as string);
     });
     elements.backBtn.addEventListener("click", onBack);
