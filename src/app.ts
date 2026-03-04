@@ -1,6 +1,5 @@
 import "./style.css";
 
-import { cy } from "./ui/views/graph";
 import { initEditor } from "./ui/editor/editor";
 import { initViewController } from "./ui/views/viewController";
 import { initTabController } from "./ui/tabs/tabController";
@@ -37,11 +36,4 @@ const tc = initTabController(tabBarEl, vc, initEditor);
 
 vc.bindEvents(tc.getState, tc.drillDown, tc.back);
 
-initEditorPane(editorPane, editorToggle, toggleBtn, () => {
-  if (vc.getView() === "graph") {
-    cy.resize();
-    cy.fit(cy.elements(), 40);
-  } else {
-    vc.render(tc.getState(), tc.drillDown);
-  }
-});
+initEditorPane(editorPane, editorToggle, toggleBtn);

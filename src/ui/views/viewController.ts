@@ -143,6 +143,22 @@ export function initViewController(elements: ViewElements) {
         resetGanttZoom();
       }
     });
+
+    let ganttResizeTimer: ReturnType<typeof setTimeout> | null = null;
+    const graphPane = elements.cyEl.parentElement;
+    if (!graphPane) throw new Error("#cy has no parent element");
+    const resizeObserver = new ResizeObserver(() => {
+      if (view === "graph") {
+        cy.resize();
+        cy.fit(cy.elements(), 40);
+      } else {
+        if (ganttResizeTimer !== null) clearTimeout(ganttResizeTimer);
+        ganttResizeTimer = setTimeout(() => {
+          render(getState(), onDrillDown);
+        }, 100);
+      }
+    });
+    resizeObserver.observe(graphPane);
   }
 
   return { render, updateBreadcrumb, resetView, getView, bindEvents };

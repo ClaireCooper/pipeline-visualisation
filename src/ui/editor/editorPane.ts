@@ -2,12 +2,10 @@ export function initEditorPane(
   editorPane: HTMLDivElement,
   editorToggle: HTMLDivElement,
   toggleBtn: HTMLButtonElement,
-  onResize: () => void,
 ): void {
   toggleBtn.addEventListener("click", () => {
     const collapsed = editorPane.classList.toggle("collapsed");
     toggleBtn.textContent = collapsed ? "›" : "‹";
-    editorPane.addEventListener("transitionend", onResize, { once: true });
   });
 
   let isDragging = false;
@@ -20,7 +18,6 @@ export function initEditorPane(
     editorPane.style.transition = "";
     document.body.style.userSelect = "";
     document.body.style.cursor = "";
-    if (didDrag) onResize();
   }
 
   editorToggle.addEventListener("mousedown", (e) => {
