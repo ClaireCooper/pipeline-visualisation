@@ -38,7 +38,7 @@ This is a single-page TypeScript app built with Vite that visualises CI/CD pipel
 - `ParsedPipeline` — `{ workflows: Record<string, Workflow> }` (in `parser.ts`)
 - `Workflow` — `{ nodes: JobNode[], edges: Edge[] }` (in `parser.ts`)
 - `JobNode` — `{ id, duration?, uses? }` — `uses` means this job delegates to another named workflow (in `parser.ts`)
-- `ScheduledJob` — `{ id, start, end, uses? }` — job with computed start/end times in minutes (in `scheduler.ts`)
+- `ScheduledJob` — `{ id, start, end, uses? }` — job with computed start/end times in seconds (in `scheduler.ts`)
 
 **Drill-down navigation:** Clicking a node with a `uses` field pushes that workflow onto the `NavStack` and re-renders. The breadcrumb and back button in `app.ts` reflect this stack.
 
