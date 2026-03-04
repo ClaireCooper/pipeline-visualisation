@@ -82,6 +82,30 @@ describe("assignRows", () => {
     expect(rows.get("second")).toBe(1);
   });
 
+  it("places shorter earlier job above longer later job", () => {
+    const jobs: ScheduledJob[] = [
+      { id: "first", start: 0, end: 10 },
+      { id: "second", start: 10, end: 12 },
+      { id: "third", start: 11, end: 15 },
+    ];
+    const rows = assignRows(jobs);
+    expect(rows.get("first")).toBe(0);
+    expect(rows.get("second")).toBe(0);
+    expect(rows.get("third")).toBe(1);
+  });
+
+  it("places longer same start time job above shorter", () => {
+    const jobs: ScheduledJob[] = [
+      { id: "first", start: 0, end: 10 },
+      { id: "second", start: 10, end: 11 },
+      { id: "third", start: 10, end: 15 },
+    ];
+    const rows = assignRows(jobs);
+    expect(rows.get("first")).toBe(0);
+    expect(rows.get("second")).toBe(1);
+    expect(rows.get("third")).toBe(0);
+  });
+
   it("fills a gap in an earlier row rather than opening a new one", () => {
     // long spans [0,30]; left and right each overlap long but not each other
     // gap spans [35,40] — fits in row 0 after long ends

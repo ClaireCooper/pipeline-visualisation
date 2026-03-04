@@ -34,28 +34,25 @@ export function getAncestors(id: string, edges: Edge[]): Set<string> {
 }
 
 export function assignRows(jobs: ScheduledJob[]): Map<string, number> {
-  const sorted = [...jobs].sort((a, b) => b.end - b.start - (a.end - a.start));
-  const rows: [number, number][][] = [];
+  let queue = Array.from(
+    jobs
+      .sort((a, b) => b.end - b.start - (a.end - a.start))
+      .sort((a, b) => a.start - b.start),
+  );
+  let row = 0;
   const result = new Map<string, number>();
 
-  for (const job of sorted) {
-    let placed = false;
-    for (let r = 0; r < rows.length; r++) {
-      const row = rows[r];
-      const overlaps = row.some(([s, e]) => job.start < e && s < job.end);
-      if (!overlaps) {
-        row.push([job.start, job.end]);
-        result.set(job.id, r);
-        placed = true;
-        break;
-      }
+  while (queue.length > 0) {
+    let end = 0;
+    while (Math.max(...queue.map((j) => j.start)) >= end) {
+      console.log(end);
+      const job = queue.filter((j) => j.start >= end)[0];
+      queue = queue.filter((j) => j.id != job.id);
+      result.set(job.id, row);
+      end = job.end;
     }
-    if (!placed) {
-      rows.push([[job.start, job.end]]);
-      result.set(job.id, rows.length - 1);
-    }
+    row += 1;
   }
-
   return result;
 }
 
