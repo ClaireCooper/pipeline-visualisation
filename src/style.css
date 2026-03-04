@@ -48,7 +48,7 @@ body {
 
 #save-btn {
   background: transparent;
-  border: 1px solid #3c3c3c;
+  border: none;
   border-radius: 3px;
   padding: 3px 6px;
   cursor: pointer;
@@ -59,7 +59,6 @@ body {
 
 #save-btn:hover {
   background: #2a2d2e;
-  border-color: #555;
 }
 
 #save-btn svg {
@@ -421,19 +420,21 @@ body {
 
 #help-btn {
   background: transparent;
-  border: 1px solid #3c3c3c;
+  border: none;
   border-radius: 3px;
-  padding: 3px 10px;
+  padding: 3px 6px;
   cursor: pointer;
-  color: #858585;
-  font-family: inherit;
-  font-size: 13px;
+  color: #d4d4d4;
+  display: flex;
+  align-items: center;
 }
 
 #help-btn:hover {
   background: #2a2d2e;
-  border-color: #555;
-  color: #d4d4d4;
+}
+
+#help-btn svg {
+  fill: currentColor;
 }
 
 .modal-backdrop {
