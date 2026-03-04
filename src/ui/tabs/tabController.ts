@@ -11,6 +11,8 @@ import type { TabState } from "./tabs";
 import { createNavStack, push, pop, current } from "../../core/navigation";
 import type { ParsedPipeline } from "../../core/parser";
 import { saveState, loadState, restoreTabState } from "../../core/persistence";
+import EXAMPLE_YAML from "./example.yaml?raw";
+export { EXAMPLE_YAML };
 
 interface EditorAPI {
   getContent: () => string;
@@ -39,7 +41,7 @@ export function initTabController(
     return _nextId++;
   }
   function freshState(): TabState {
-    const tab = createTab(nextId(), "pipeline-1");
+    const tab = createTab(nextId(), "pipeline-1", EXAMPLE_YAML);
     return { tabs: [tab], activeId: tab.id };
   }
 
@@ -148,7 +150,7 @@ export function initTabController(
     saveCurrentTab();
     const name = filename.replace(/\.(yaml|yml)$/, "");
     const active = activeTab(state);
-    if (active.yaml === "") {
+    if (active.yaml === "" || active.yaml === EXAMPLE_YAML) {
       state = updateTab(state, state.activeId, { name, yaml: text });
     } else {
       const tab = createTab(nextId(), name, text);
@@ -191,7 +193,7 @@ export function initTabController(
     ?.addEventListener("click", downloadActive);
 
   rerenderTabs();
-  if (persisted) loadActiveTab();
+  loadActiveTab();
 
   return {
     getState,

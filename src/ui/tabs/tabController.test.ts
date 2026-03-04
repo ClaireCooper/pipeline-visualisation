@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { initTabController } from "./tabController";
+import { initTabController, EXAMPLE_YAML } from "./tabController";
 import type { ParsedPipeline } from "../../core/parser";
 
 function makeVc() {
@@ -172,11 +172,9 @@ describe("initTabController", () => {
     });
 
     it("creates a new tab when the active tab has content", () => {
-      const tc = initTabController(
-        container,
-        makeVc(),
-        makeEditorFactory("existing: content"),
-      );
+      const editor = makeEditor();
+      const tc = initTabController(container, makeVc(), () => editor);
+      editor.setContent("existing: content");
       tc.onFileLoaded("ci.yaml", "jobs:\n  build: {}");
       const { tabs, activeId } = tc.getState();
       expect(tabs).toHaveLength(2);
@@ -261,8 +259,9 @@ describe("initTabController", () => {
 
   describe("persistence", () => {
     it("saves tab name and yaml to localStorage after onParsed", () => {
-      const editor = makeEditor("jobs:\n  build: {}");
+      const editor = makeEditor();
       const tc = initTabController(container, makeVc(), () => editor);
+      editor.setContent("jobs:\n  build: {}");
       tc.renameTab(tc.getState().activeId, "my-ci");
       tc.onParsed(PIPELINE);
 
@@ -274,8 +273,9 @@ describe("initTabController", () => {
     });
 
     it("restores tabs from localStorage on init", () => {
-      const editor = makeEditor("jobs:\n  build: {}");
+      const editor = makeEditor();
       const tc1 = initTabController(container, makeVc(), () => editor);
+      editor.setContent("jobs:\n  build: {}");
       tc1.renameTab(tc1.getState().activeId, "restored-ci");
       tc1.onParsed(PIPELINE);
 
@@ -290,8 +290,9 @@ describe("initTabController", () => {
     });
 
     it("populates the editor with restored yaml on init", () => {
-      const editor = makeEditor("jobs:\n  build: {}");
+      const editor = makeEditor();
       const tc1 = initTabController(container, makeVc(), () => editor);
+      editor.setContent("jobs:\n  build: {}");
       tc1.onParsed(PIPELINE);
 
       const restoredEditor = makeEditor();
@@ -334,7 +335,7 @@ describe("initTabController", () => {
       const tc = initTabController(container, makeVc(), makeEditorFactory());
       const { tabs } = tc.getState();
       expect(tabs).toHaveLength(1);
-      expect(tabs[0].yaml).toBe("");
+      expect(tabs[0].yaml).toBe(EXAMPLE_YAML);
     });
 
     it("persists fresh state after closing the last tab", () => {
@@ -350,7 +351,7 @@ describe("initTabController", () => {
       const saved = JSON.parse(raw ?? "");
       expect(saved.tabs).toHaveLength(1);
       expect(saved.tabs[0].id).not.toBe(onlyId);
-      expect(saved.tabs[0].yaml).toBe("");
+      expect(saved.tabs[0].yaml).toBe(EXAMPLE_YAML);
     });
   });
 });

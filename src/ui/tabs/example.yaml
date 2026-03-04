@@ -1,0 +1,54 @@
+ci:
+  jobs:
+    checkout:
+      duration: 10
+    setup:
+      needs:
+        - checkout
+      uses: setup
+    unit-test:
+      needs:
+        - setup
+      duration: 45
+    lint:
+      needs:
+        - setup
+      duration: 20
+    typecheck:
+      needs:
+        - setup
+      duration: 15
+    integration-test:
+      needs:
+        - unit-test
+      duration: 60
+    build:
+      needs:
+        - unit-test
+        - lint
+        - typecheck
+      duration: 45
+    deploy-staging:
+      needs:
+        - build
+      duration: 20
+    smoke-test:
+      needs:
+        - deploy-staging
+      duration: 30
+    deploy-prod:
+      needs:
+        - smoke-test
+      duration: 15
+
+setup:
+  jobs:
+    restore-cache:
+      duration: 10
+    install-deps:
+      duration: 30
+    compile-protos:
+      needs:
+        - restore-cache
+        - install-deps
+      duration: 15
