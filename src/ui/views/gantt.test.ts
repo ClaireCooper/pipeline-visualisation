@@ -5,6 +5,7 @@ import {
   initGantt,
   renderGantt,
   resetGanttZoom,
+  wrapLabel,
 } from "./gantt";
 import type { ScheduledJob } from "../../core/scheduler";
 import type { Edge, ParsedPipeline } from "../../core/parser";
@@ -118,6 +119,10 @@ describe("renderGantt pan/zoom", () => {
       configurable: true,
       value: 600,
     });
+    Object.defineProperty(el, "clientHeight", {
+      configurable: true,
+      value: 400,
+    });
     initGantt();
   });
 
@@ -189,5 +194,63 @@ describe("renderGantt pan/zoom", () => {
     resetGanttZoom();
 
     expect(g?.getAttribute("transform")).toBe("translate(12,12) scale(1)");
+  });
+
+  it("uses MAX_ROW_H bars when container has room for one row", () => {
+    // clientHeight=400, TOP_PADDING=24, CONTENT_PADDING=12 → contentH=352
+    // 1 row → rowH = min(72, 352) = 72 → barH = 72-12 = 60
+    renderGantt("build", pipeline, noDrillDown);
+    const rect = document.querySelector<SVGRectElement>("#gantt .gantt-bar");
+    expect(rect?.getAttribute("height")).toBe("60");
+  });
+});
+
+// Constants used below match gantt.ts: CHAR_W=7, LABEL_PADDING=8, LINE_H=15, BAR_TEXT_V_PADDING=8
+// barW=50 → maxCharsPerLine = floor((50-8)/7) = 6
+// barW=100 → maxCharsPerLine = floor((100-8)/7) = 13
+// barH=20 → maxLines = max(1, floor((20-8)/15)) = max(1,0) = 1  ← MIN_ROW_H case
+// barH=32 → maxLines = max(1, floor((32-8)/15)) = max(1,1) = 1
+// barH=72 → maxLines = max(1, floor((72-8)/15)) = max(1,4) = 4
+
+describe("wrapLabel", () => {
+  it("returns single line when label fits", () => {
+    expect(wrapLabel("abc", 100, 72)).toEqual(["abc"]);
+  });
+
+  it("returns single line when label exactly fills the width", () => {
+    // 6 chars exactly fills barW=50
+    expect(wrapLabel("abcdef", 50, 72)).toEqual(["abcdef"]);
+  });
+
+  it("wraps at a hyphen when label is too wide", () => {
+    // 'build-test' (10 chars) → break after 'build-' (6 chars = maxCharsPerLine)
+    expect(wrapLabel("build-test", 50, 72)).toEqual(["build-", "test"]);
+  });
+
+  it("wraps at an underscore when label is too wide", () => {
+    expect(wrapLabel("build_test", 50, 72)).toEqual(["build_", "test"]);
+  });
+
+  it("wraps mid-character when there are no separators", () => {
+    // 'abcdefghij' (10 chars) → 'abcdef', 'ghij'
+    expect(wrapLabel("abcdefghij", 50, 72)).toEqual(["abcdef", "ghij"]);
+  });
+
+  it("truncates last line with ellipsis when content exceeds maxLines", () => {
+    // barH=32 → maxLines=1; 'abcdefghijklmno' wraps to multiple lines → truncate first
+    // 'abcdef'.slice(0,5)+'…' = 'abcde…'
+    expect(wrapLabel("abcdefghijklmno", 50, 32)).toEqual(["abcde…"]);
+  });
+
+  it("truncates a hyphen-wrapped last line with ellipsis", () => {
+    // barH=32 → maxLines=1; 'build-test' wraps to ['build-','test'] → truncate
+    // 'build-'.slice(0,5)+'…' = 'build…'
+    expect(wrapLabel("build-test", 50, 32)).toEqual(["build…"]);
+  });
+
+  it("truncates with ellipsis at MIN_ROW_H bar height (barH=20, maxLines clamped to 1)", () => {
+    // barH=20 (MIN_ROW_H-12): max(1, floor((20-8)/15)) = 1, not 0
+    // 'build-test' wraps to ['build-','test'] → truncate to 'build…'
+    expect(wrapLabel("build-test", 50, 20)).toEqual(["build…"]);
   });
 });
