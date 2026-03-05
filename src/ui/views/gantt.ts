@@ -5,14 +5,16 @@ import {
 } from "../../core/scheduler";
 import { showTooltip, hideTooltip } from "../tooltip";
 
-const ROW_H = 32;
-const BAR_H = 20;
+const MIN_ROW_H = 32;
+const MAX_ROW_H = 72;
 // TOP_PADDING must be >= 10 to keep AXIS_TICK_LINE_Y and AXIS_LABEL_Y within the SVG viewport
 const TOP_PADDING = 24; // px top padding (axis area)
 const MIN_BAR_LABEL_W = 30;
 const RIGHT_PADDING = 3; // px right padding
 const LABEL_PADDING = 8; // px horizontal padding inside bar (4px each side)
-const CHAR_W = 6; // approximate px per char for monospace 10px
+const CHAR_W = 7; // approximate px per char for monospace 12px
+const LINE_H = 15; // px per line of wrapped text
+const BAR_TEXT_V_PADDING = 8; // px vertical clearance between bar edge and text block
 const AXIS_TICK_LINE_Y = TOP_PADDING - 4;
 const AXIS_LABEL_Y = TOP_PADDING - 6;
 const CONTENT_PADDING = 12; // px padding around chart content
@@ -63,10 +65,48 @@ function svgEl<T extends SVGElement>(tag: string): T {
   return document.createElementNS("http://www.w3.org/2000/svg", tag) as T;
 }
 
-function truncateLabel(text: string, barW: number): string {
-  const maxChars = Math.floor((barW - LABEL_PADDING) / CHAR_W);
-  if (text.length <= maxChars) return text;
-  return text.slice(0, Math.max(1, maxChars - 1)) + "…";
+function findLastSeparator(s: string): number {
+  for (let i = s.length - 1; i >= 0; i--) {
+    if (s[i] === "-" || s[i] === "_") return i;
+  }
+  return -1;
+}
+
+function wrapText(text: string, maxCharsPerLine: number): string[] {
+  if (text.length <= maxCharsPerLine) return [text];
+  const lines: string[] = [];
+  let current = "";
+  for (const ch of text) {
+    if (current.length < maxCharsPerLine) {
+      current += ch;
+    } else {
+      const sepIdx = findLastSeparator(current);
+      if (sepIdx !== -1) {
+        lines.push(current.slice(0, sepIdx + 1));
+        current = current.slice(sepIdx + 1) + ch;
+      } else {
+        lines.push(current);
+        current = ch;
+      }
+    }
+  }
+  if (current) lines.push(current);
+  return lines;
+}
+
+export function wrapLabel(text: string, barW: number, barH: number): string[] {
+  const maxCharsPerLine = Math.floor((barW - LABEL_PADDING) / CHAR_W);
+  if (maxCharsPerLine <= 0) return [text.slice(0, 1)];
+  const maxLines = Math.max(
+    1,
+    Math.floor((barH - BAR_TEXT_V_PADDING) / LINE_H),
+  );
+  const lines = wrapText(text, maxCharsPerLine);
+  if (lines.length <= maxLines) return lines;
+  const truncated = lines.slice(0, maxLines);
+  truncated[maxLines - 1] =
+    truncated[maxLines - 1].slice(0, maxCharsPerLine - 1) + "…";
+  return truncated;
 }
 
 function formatDuration(seconds: number, includeHours: boolean): string {
@@ -146,19 +186,21 @@ function buildJobRow(
   parent: Element,
   job: ScheduledJob,
   rowIndex: number,
+  rowH: number,
+  barH: number,
   pxPerUnit: number,
   onDrillDown: (uses: string) => void,
 ): void {
-  const rowY = TOP_PADDING + rowIndex * ROW_H;
+  const rowY = TOP_PADDING + rowIndex * rowH;
   const barX = job.start * pxPerUnit;
   const barW = Math.max(2, (job.end - job.start) * pxPerUnit);
-  const barY = rowY + (ROW_H - BAR_H) / 2;
+  const barY = rowY + (rowH - barH) / 2;
 
   const rect = svgEl<SVGRectElement>("rect");
   rect.setAttribute("x", String(barX));
   rect.setAttribute("y", String(barY));
   rect.setAttribute("width", String(barW));
-  rect.setAttribute("height", String(BAR_H));
+  rect.setAttribute("height", String(barH));
   rect.setAttribute(
     "class",
     job.uses ? "gantt-bar gantt-bar--uses" : "gantt-bar",
@@ -182,12 +224,22 @@ function buildJobRow(
   parent.appendChild(rect);
 
   if (barW > MIN_BAR_LABEL_W) {
+    const lines = wrapLabel(job.id, barW, barH);
+    const textBlockH = lines.length * LINE_H;
+    // LINE_H * 0.8: SVG text y is the baseline (~80% down the line height), not the top
+    const textStartY = barY + (barH - textBlockH) / 2 + LINE_H * 0.8;
+
     const barLabel = svgEl<SVGTextElement>("text");
-    barLabel.setAttribute("x", String(barX + 4));
-    barLabel.setAttribute("y", String(barY + BAR_H / 2));
-    barLabel.setAttribute("dominant-baseline", "middle");
     barLabel.setAttribute("class", "gantt-label");
-    barLabel.textContent = truncateLabel(job.id, barW);
+
+    for (let i = 0; i < lines.length; i++) {
+      const tspan = svgEl<SVGTSpanElement>("tspan");
+      tspan.setAttribute("x", String(barX + 4));
+      tspan.setAttribute("y", String(Math.round(textStartY + i * LINE_H)));
+      tspan.textContent = lines[i];
+      barLabel.appendChild(tspan);
+    }
+
     parent.appendChild(barLabel);
   }
 }
@@ -196,6 +248,7 @@ function buildSvg(
   jobs: ScheduledJob[],
   onDrillDown: (uses: string) => void,
   contentW: number,
+  contentH: number,
 ): { svg: SVGSVGElement; g: SVGGElement } {
   const svg = svgEl<SVGSVGElement>("svg");
   svg.setAttribute("width", "100%");
@@ -205,13 +258,25 @@ function buildSvg(
   svg.appendChild(g);
 
   const rowMap = assignRows(jobs);
+  const numRows = Math.max(...rowMap.values()) + 1;
+  const rowH = Math.max(MIN_ROW_H, Math.min(MAX_ROW_H, contentH / numRows));
+  const barH = rowH - 12;
+
   const rawMax = jobs.reduce((m, j) => Math.max(m, j.end), 0);
   const chartW = contentW - RIGHT_PADDING;
   const pxPerUnit = chartW / (rawMax > 0 ? rawMax : 1);
 
   buildAxis(g, chartW, rawMax, pxPerUnit);
   for (const job of jobs) {
-    buildJobRow(g, job, rowMap.get(job.id) ?? 0, pxPerUnit, onDrillDown);
+    buildJobRow(
+      g,
+      job,
+      rowMap.get(job.id) ?? 0,
+      rowH,
+      barH,
+      pxPerUnit,
+      onDrillDown,
+    );
   }
 
   return { svg, g };
@@ -344,7 +409,9 @@ export function renderGantt(
   jobs.sort((a, b) => a.start - b.start || a.id.localeCompare(b.id));
 
   const contentW = ganttContainer.clientWidth - CONTENT_PADDING * 2;
-  const { svg, g } = buildSvg(jobs, onDrillDown, contentW);
+  const contentH =
+    ganttContainer.clientHeight - TOP_PADDING - CONTENT_PADDING * 2;
+  const { svg, g } = buildSvg(jobs, onDrillDown, contentW, contentH);
   contentGroup = g;
   panX = CONTENT_PADDING;
   panY = CONTENT_PADDING;
