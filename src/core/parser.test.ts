@@ -81,6 +81,45 @@ main:
     expect(result.error).toMatch(/missing-workflow/);
   });
 
+  it("produces an edge from needs declared as a single string", () => {
+    const yaml = `
+pipeline:
+  jobs:
+    build:
+      duration: 60
+    test:
+      needs: build
+`;
+    const result = parse(yaml);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    const { edges } = result.pipeline.workflows["pipeline"];
+    expect(edges).toContainEqual({ source: "build", target: "test" });
+    expect(edges).toHaveLength(1);
+  });
+
+  it("produces edges from needs declared with inline bracket syntax", () => {
+    const yaml = `
+pipeline:
+  jobs:
+    build:
+      duration: 60
+    test:
+      duration: 30
+    deploy:
+      needs: [build, test]
+`;
+    const result = parse(yaml);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    const { edges } = result.pipeline.workflows["pipeline"];
+    expect(edges).toContainEqual({ source: "build", target: "deploy" });
+    expect(edges).toContainEqual({ source: "test", target: "deploy" });
+    expect(edges).toHaveLength(2);
+  });
+
   it("returns an error for invalid YAML", () => {
     const result = parse("}{invalid yaml{{");
     expect(result.ok).toBe(false);
