@@ -3,8 +3,14 @@ import {
   renderWorkflow,
   initTooltip,
   initDependencyHighlight,
+  exportGraphSvg,
 } from "./graph";
-import { renderGantt, initGantt, resetGanttZoom } from "./gantt";
+import {
+  renderGantt,
+  initGantt,
+  resetGanttZoom,
+  exportGanttSvg,
+} from "./gantt";
 import { hasMissingDurations } from "../../core/scheduler";
 import { current } from "../../core/navigation";
 import { activeTab } from "../tabs/tabs";
@@ -150,7 +156,9 @@ export function initViewController(elements: ViewElements) {
     const resizeObserver = new ResizeObserver(() => {
       if (view === "graph") {
         cy.resize();
-        cy.fit(cy.elements(), 40);
+        requestAnimationFrame(() => {
+          cy.fit(cy.elements(), 40);
+        });
       } else {
         if (ganttResizeTimer !== null) clearTimeout(ganttResizeTimer);
         ganttResizeTimer = setTimeout(() => {
@@ -161,5 +169,24 @@ export function initViewController(elements: ViewElements) {
     resizeObserver.observe(graphPane);
   }
 
-  return { render, updateBreadcrumb, resetView, getView, bindEvents };
+  function exportSvg(filename: string): void {
+    const svgString = view === "gantt" ? exportGanttSvg() : exportGraphSvg();
+    if (!svgString) return;
+    const blob = new Blob([svgString], { type: "image/svg+xml" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${filename}.svg`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  return {
+    render,
+    updateBreadcrumb,
+    resetView,
+    getView,
+    bindEvents,
+    exportSvg,
+  };
 }

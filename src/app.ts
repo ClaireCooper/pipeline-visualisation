@@ -5,6 +5,7 @@ import { initViewController } from "./ui/views/viewController";
 import { initTabController } from "./ui/tabs/tabController";
 import { initEditorPane } from "./ui/editor/editorPane";
 import { initHelpModal } from "./ui/help/helpModal";
+import { activeTab } from "./ui/tabs/tabs";
 
 // DOM elements
 const backBtn = document.getElementById("back-btn") as HTMLButtonElement;
@@ -25,6 +26,9 @@ const zoomResetBtn = document.getElementById(
 ) as HTMLButtonElement;
 const helpBtn = document.getElementById("help-btn") as HTMLButtonElement;
 const helpModal = document.getElementById("help-modal") as HTMLElement;
+const downloadSvgBtn = document.getElementById(
+  "download-svg-btn",
+) as HTMLButtonElement;
 
 const vc = initViewController({
   cyEl,
@@ -38,6 +42,10 @@ const vc = initViewController({
 const tc = initTabController(tabBarEl, vc, initEditor);
 
 vc.bindEvents(tc.getState, tc.drillDown, tc.back);
+
+downloadSvgBtn.addEventListener("click", () => {
+  vc.exportSvg(activeTab(tc.getState()).name);
+});
 
 initEditorPane(editorPane, editorToggle, toggleBtn);
 

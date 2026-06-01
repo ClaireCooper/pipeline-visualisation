@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import {
   assignRows,
+  exportGanttSvg,
   getAncestors,
   initGantt,
   renderGantt,
@@ -202,6 +203,31 @@ describe("renderGantt pan/zoom", () => {
     renderGantt("build", pipeline, noDrillDown);
     const rect = document.querySelector<SVGRectElement>("#gantt .gantt-bar");
     expect(rect?.getAttribute("height")).toBe("60");
+  });
+
+  it("exportGanttSvg returns a non-null SVG string with embedded styles after render", () => {
+    renderGantt("build", pipeline, noDrillDown);
+    const result = exportGanttSvg();
+    expect(result).not.toBeNull();
+    expect(result).toContain("<svg");
+    expect(result).toContain("<style");
+    expect(result).toContain("gantt-bar");
+  });
+
+  it("exportGanttSvg returns null when no SVG has been rendered yet", () => {
+    document.body.innerHTML = '<div id="gantt"></div>';
+    const el = document.getElementById("gantt");
+    if (!el) throw new Error("no #gantt element");
+    Object.defineProperty(el, "clientWidth", {
+      configurable: true,
+      value: 600,
+    });
+    Object.defineProperty(el, "clientHeight", {
+      configurable: true,
+      value: 400,
+    });
+    initGantt();
+    expect(exportGanttSvg()).toBeNull();
   });
 });
 

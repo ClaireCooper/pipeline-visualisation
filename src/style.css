@@ -65,6 +65,25 @@ body {
   fill: currentColor;
 }
 
+#download-svg-btn {
+  background: transparent;
+  border: none;
+  border-radius: 3px;
+  padding: 3px 6px;
+  cursor: pointer;
+  color: #d4d4d4;
+  display: flex;
+  align-items: center;
+}
+
+#download-svg-btn:hover {
+  background: #2a2d2e;
+}
+
+#download-svg-btn svg {
+  fill: currentColor;
+}
+
 #github-link {
   color: #d4d4d4;
   display: flex;

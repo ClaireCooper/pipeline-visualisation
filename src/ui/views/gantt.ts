@@ -388,6 +388,31 @@ export function initGantt(): void {
   );
 }
 
+export function exportGanttSvg(): string | null {
+  if (!ganttContainer) return null;
+  const liveSvg = ganttContainer.querySelector("svg");
+  if (!liveSvg) return null;
+  const clone = liveSvg.cloneNode(true) as SVGSVGElement;
+  const w = ganttContainer.clientWidth;
+  const h = ganttContainer.clientHeight;
+  clone.setAttribute("width", String(w));
+  clone.setAttribute("height", String(h));
+  clone.setAttribute("viewBox", `0 0 ${w} ${h}`);
+  clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+  const style = document.createElementNS("http://www.w3.org/2000/svg", "style");
+  style.textContent = [
+    ".gantt-bar { fill: #252526; stroke: #c586c0; stroke-width: 1; }",
+    ".gantt-bar--uses { fill: #2a2d2e; stroke-dasharray: 4 2; stroke-width: 2; cursor: pointer; }",
+    ".gantt-bar--uses:hover { fill: #37373d; }",
+    ".gantt-bar--ancestor { stroke: #47cbbc; stroke-width: 2; }",
+    ".gantt-label { font-size: 12px; fill: #c586c0; pointer-events: none; }",
+    ".gantt-axis-tick { stroke: #3c3c3c; stroke-width: 1; }",
+    ".gantt-axis-label { font-size: 10px; fill: #858585; }",
+  ].join(" ");
+  clone.insertBefore(style, clone.firstChild);
+  return new XMLSerializer().serializeToString(clone);
+}
+
 export function renderGantt(
   workflowName: string,
   pipeline: ParsedPipeline,

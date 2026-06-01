@@ -5,6 +5,7 @@ export interface ElementData {
   source?: string;
   target?: string;
   label?: string;
+  displayLabel?: string;
   duration?: number;
   uses?: string;
 }
@@ -20,6 +21,7 @@ export function buildElements(workflow: Workflow): CyElement[] {
     data: {
       id: node.id,
       label: node.id,
+      displayLabel: node.id,
       ...(node.duration !== undefined ? { duration: node.duration } : {}),
       ...(node.uses !== undefined ? { uses: node.uses } : {}),
     },
